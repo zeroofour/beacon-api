@@ -1,6 +1,6 @@
 const BASE = "https://distalk.app";
-const COOKIE = process.env.SESSION_COOKIE || "novatalk_session=7f8f2fcd4c435c6755043dd2381be023";
-const DEVICE = process.env.DEVICE_ID || "49d6a506790846ceb41dad8909dbda90";
+const COOKIE = process.env.SESSION_COOKIE || "";
+const DEVICE = process.env.DEVICE_ID || "";
 
 async function fetchAllUsers() {
   try {
