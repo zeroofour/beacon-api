@@ -540,7 +540,7 @@ async function cmdCount(reply) {
 }
 
 async function cmdDocs(reply) {
-  return reply("`beacon api documentation`\n\nhttps://api-beacon.fly.dev/docs");
+  return reply("`beacon api documentation`\n\nhttps://api-beacon.onrender.com/docs");
 }
 
 function findUser(query) {
@@ -584,7 +584,7 @@ function formatUptime(ms) {
 }
 
 async function cmdPrivacy(reply) {
-  return reply("`beacon privacy policy`\n\nhttps://api-beacon.fly.dev/privacy");
+  return reply("`beacon privacy policy`\n\nhttps://api-beacon.onrender.com/privacy");
 }
 
 function listenToAllChannels(channels = [], serverIds = []) {

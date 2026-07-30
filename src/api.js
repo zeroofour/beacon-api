@@ -133,7 +133,7 @@ router.get("/docs", (req, res) => {
   <div class="container">
     <h1>beacon</h1>
     <p class="subtitle">presence api for distalk</p>
-    <div class="base-url">https://api-beacon.fly.dev</div>
+    <div class="base-url">https://api-beacon.onrender.com</div>
 
     <div class="section">
       <h2>rest api</h2>
@@ -141,13 +141,13 @@ router.get("/docs", (req, res) => {
         <span class="method method-get">GET</span>
         <span class="path">/v1/users</span>
         <div class="desc">returns all tracked users. supports ?ids=id1,id2 for multiple specific users</div>
-        <div class="example">curl https://api-beacon.fly.dev/v1/users</div>
+        <div class="example">curl https://api-beacon.onrender.com/v1/users</div>
       </div>
       <div class="endpoint">
         <span class="method method-get">GET</span>
         <span class="path">/v1/users/:id</span>
         <div class="desc">returns a specific user by id</div>
-        <div class="example">curl https://api-beacon.fly.dev/v1/users/usr_8f7220facabf757f</div>
+        <div class="example">curl https://api-beacon.onrender.com/v1/users/usr_8f7220facabf757f</div>
         <div class="response">{
   "success": true,
   "data": {
@@ -169,7 +169,7 @@ router.get("/docs", (req, res) => {
         <span class="method method-get">GET</span>
         <span class="path">/v1/users/:id/presence</span>
         <div class="desc">returns only presence data</div>
-        <div class="example">curl https://api-beacon.fly.dev/v1/users/usr_8f7220facabf757f/presence</div>
+        <div class="example">curl https://api-beacon.onrender.com/v1/users/usr_8f7220facabf757f/presence</div>
       </div>
     </div>
 
@@ -189,7 +189,7 @@ router.get("/docs", (req, res) => {
         <span class="method method-put">PUT</span>
         <span class="path">/v1/users/:id/kv/:key</span>
         <div class="desc">set a kv value (requires authorization header)</div>
-        <div class="example">curl -X PUT https://api-beacon.fly.dev/v1/users/:id/kv/website -H "Authorization: your-api-key" -d '"https://example.com"'</div>
+        <div class="example">curl -X PUT https://api-beacon.onrender.com/v1/users/:id/kv/website -H "Authorization: your-api-key" -d '"https://example.com"'</div>
       </div>
       <div class="endpoint">
         <span class="method method-delete">DELETE</span>
@@ -202,9 +202,9 @@ router.get("/docs", (req, res) => {
       <h2>websocket</h2>
       <div class="endpoint">
         <span class="method method-ws">WSS</span>
-        <span class="path">wss://api-beacon.fly.dev/socket</span>
+        <span class="path">wss://api-beacon.onrender.com/socket</span>
         <div class="desc">realtime presence updates</div>
-        <div class="response">const ws = new WebSocket("wss://api-beacon.fly.dev/socket");
+        <div class="response">const ws = new WebSocket("wss://api-beacon.onrender.com/socket");
 
 // on connect you receive: { op: 1, d: { heartbeat_interval: 30000 } }
 
@@ -226,7 +226,7 @@ setInterval(() => ws.send(JSON.stringify({ op: 3 })), 30000);</div>
       <div class="endpoint">
         <span class="method method-post">POST</span>
         <span class="path">/github</span>
-        <div class="desc">github webhook endpoint — posts updates to distalk</div>
+        <div class="desc">github webhook endpoint - posts updates to distalk</div>
       </div>
     </div>
 
@@ -234,19 +234,19 @@ setInterval(() => ws.send(JSON.stringify({ op: 3 })), 30000);</div>
       <h2>usage</h2>
       <div class="endpoint">
         <div class="desc">javascript</div>
-        <div class="response">const res = await fetch("https://api-beacon.fly.dev/v1/users/usr_8f7220facabf757f");
+        <div class="response">const res = await fetch("https://api-beacon.onrender.com/v1/users/usr_8f7220facabf757f");
 const { data } = await res.json();
 console.log(data.presence.status);</div>
       </div>
       <div class="endpoint">
         <div class="desc">python</div>
         <div class="response">import requests
-res = requests.get("https://api-beacon.fly.dev/v1/users/usr_8f7220facabf757f")
+res = requests.get("https://api-beacon.onrender.com/v1/users/usr_8f7220facabf757f")
 print(res.json()["data"]["presence"]["status"])</div>
       </div>
       <div class="endpoint">
         <div class="desc">websocket</div>
-        <div class="response">const ws = new WebSocket("wss://api-beacon.fly.dev/socket");
+        <div class="response">const ws = new WebSocket("wss://api-beacon.onrender.com/socket");
 ws.onmessage = (e) => {
   const msg = JSON.parse(e.data);
   if (msg.t === "PRESENCE_UPDATE") {
@@ -366,7 +366,7 @@ router.get("/privacy", (req, res) => {
     <p>Leave the Beacon-tracked server. For cached data removal, contact through the support server.</p>
 
     <h2>third-party services</h2>
-    <p>Beacon uses Fly.io for hosting. Standard infrastructure logging may apply.</p>
+    <p>Beacon uses hosting infrastructure where standard logging may apply.</p>
 
     <h2>changes</h2>
     <p>This policy may change. Updates will be reflected on this page.</p>
