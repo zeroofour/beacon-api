@@ -198,11 +198,11 @@ async function cmdSearch(query, reply) {
 
 async function cmdHelp(reply) {
   return reply(
-    "`/status <user>` — get someone's current status\n" +
-    "`/profile <user>` — full profile info\n" +
-    "`/online` — list all online users\n" +
-    "`/search <query>` — search users by name\n" +
-    "`/help` — show this message"
+    "`/status <user>`  get someone's current status\n" +
+    "`/profile <user>`  full profile info\n" +
+    "`/online`  list all online users\n" +
+    "`/search <query>`  search users by name\n" +
+    "`/help`  show this message"
   );
 }
 
