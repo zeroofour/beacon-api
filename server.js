@@ -18,11 +18,9 @@ let channelIds = [];
 async function poll() {
   const result = await fetchAllUsers();
   if (!result) return;
-
   result.users.forEach(u => store.set(u.id, u));
   serverIds = result.serverIds;
   channelIds = result.channels;
-
   console.log(`[Poll] ${result.users.length} users | ${serverIds.length} servers | ${channelIds.length} channels`);
 }
 

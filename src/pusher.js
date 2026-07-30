@@ -5,7 +5,8 @@ const { send, fetchMessages } = require("./fetcher");
 const BOT_ID = "usr_527896a920b8dc3e";
 let ws = null;
 let pingTimer = null;
-let lastSync = new Date().toISOString();
+// Start from 5 seconds ago max — ignores anything older on restart
+let lastSync = new Date(Date.now() - 5000).toISOString();
 let syncing = false;
 const subs = new Set();
 const seen = new Set();
