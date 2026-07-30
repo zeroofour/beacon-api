@@ -9,6 +9,7 @@ let lastSync = new Date().toISOString();
 let syncing = false;
 const subs = new Set();
 const seen = new Set();
+const replied = new Set();
 
 function initPusher() {
   ws = new WebSocket("wss://ws-eu.pusher.com/app/8ecfcde38263841b251c?protocol=7&client=distalk&version=1.0&flash=false");
@@ -70,6 +71,14 @@ async function checkMessages() {
     if (seen.size > 1000) seen.delete(seen.values().next().value);
     if (msg.user_id === BOT_ID) continue;
     if (!msg.body?.startsWith("/")) continue;
+    if (replied.has(msg.id)) continue;
+
+    const age = Date.now() - new Date(msg.created_at).getTime();
+    if (age > 30000) continue;
+
+    replied.add(msg.id);
+    if (replied.size > 500) replied.delete(replied.values().next().value);
+
     console.log(`[Chat] "${msg.body}" from ${msg.user_id} in ${msg.channel_id}`);
     await handleCommand(msg);
   }
@@ -184,11 +193,11 @@ async function cmdSearch(query, reply) {
 
 async function cmdHelp(reply) {
   return reply(
-    "`/status <user>`  get someone's current status\n" +
-    "`/profile <user>`  full profile info\n" +
-    "`/online`  list all online users\n" +
-    "`/search <query>`  search users by name\n" +
-    "`/help`  show this message"
+    "`/status <user>` — get someone's current status\n" +
+    "`/profile <user>` — full profile info\n" +
+    "`/online` — list all online users\n" +
+    "`/search <query>` — search users by name\n" +
+    "`/help` — show this message"
   );
 }
 
