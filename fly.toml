@@ -1,4 +1,4 @@
-app = "beacon-old-cloud-9654"
+app = "api-beacon"
 primary_region = "fra"
 
 [http_service]

@@ -22,7 +22,7 @@ router.get("/docs", (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Beacon API Docs</title>
+  <title>Beacon API</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #0a0a0a; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px 20px; }
@@ -49,9 +49,9 @@ router.get("/docs", (req, res) => {
 <body>
   <div class="container">
     <h1>beacon</h1>
-    <p class="subtitle">lanyard-like presence api for distalk</p>
+    <p class="subtitle">presence api for distalk</p>
 
-    <div class="base-url">https://beacon-old-cloud-9654.fly.dev</div>
+    <div class="base-url">https://api-beacon.fly.dev</div>
 
     <div class="section">
       <h2>endpoints</h2>
@@ -60,14 +60,14 @@ router.get("/docs", (req, res) => {
         <span class="method">GET</span>
         <span class="path">/v1/users</span>
         <div class="desc">returns all tracked users</div>
-        <div class="example">curl https://beacon-old-cloud-9654.fly.dev/v1/users</div>
+        <div class="example">curl https://api-beacon.fly.dev/v1/users</div>
       </div>
 
       <div class="endpoint">
         <span class="method">GET</span>
         <span class="path">/v1/users/:id</span>
         <div class="desc">returns a specific user by id or username</div>
-        <div class="example">curl https://beacon-old-cloud-9654.fly.dev/v1/users/usr_8f7220facabf757f</div>
+        <div class="example">curl https://api-beacon.fly.dev/v1/users/usr_8f7220facabf757f</div>
         <div class="response">{
   "success": true,
   "data": {
@@ -77,7 +77,7 @@ router.get("/docs", (req, res) => {
     "presence": {
       "status": "online",
       "is_mobile": false,
-      "custom_status": { "emoji": "🛠️", "text": null },
+      "custom_status": { "emoji": null, "text": null },
       "activity": null
     },
     "spotify": {
@@ -92,14 +92,14 @@ router.get("/docs", (req, res) => {
         <span class="method">GET</span>
         <span class="path">/v1/users/:id/presence</span>
         <div class="desc">returns only the presence data for a user</div>
-        <div class="example">curl https://beacon-old-cloud-9654.fly.dev/v1/users/usr_8f7220facabf757f/presence</div>
+        <div class="example">curl https://api-beacon.fly.dev/v1/users/usr_8f7220facabf757f/presence</div>
         <div class="response">{
   "success": true,
   "data": {
     "id": "usr_8f7220facabf757f",
     "status": "online",
     "is_mobile": false,
-    "custom_status": { "emoji": "🛠️", "text": null },
+    "custom_status": { "emoji": null, "text": null },
     "activity": null,
     "spotify": { "connected": false, "now_playing": null }
   }
@@ -109,16 +109,16 @@ router.get("/docs", (req, res) => {
       <div class="endpoint">
         <span class="method">POST</span>
         <span class="path">/github</span>
-        <div class="desc">github webhook endpoint — posts commit/pr/issue updates to distalk</div>
+        <div class="desc">github webhook endpoint — posts updates to distalk</div>
       </div>
     </div>
 
     <div class="section">
-      <h2>usage examples</h2>
+      <h2>usage</h2>
 
       <div class="endpoint">
         <div class="desc">javascript</div>
-        <div class="response">const res = await fetch("https://beacon-old-cloud-9654.fly.dev/v1/users/usr_8f7220facabf757f");
+        <div class="response">const res = await fetch("https://api-beacon.fly.dev/v1/users/usr_8f7220facabf757f");
 const { data } = await res.json();
 console.log(data.presence.status);</div>
       </div>
@@ -126,14 +126,14 @@ console.log(data.presence.status);</div>
       <div class="endpoint">
         <div class="desc">python</div>
         <div class="response">import requests
-res = requests.get("https://beacon-old-cloud-9654.fly.dev/v1/users/usr_8f7220facabf757f")
+res = requests.get("https://api-beacon.fly.dev/v1/users/usr_8f7220facabf757f")
 print(res.json()["data"]["presence"]["status"])</div>
       </div>
 
       <div class="endpoint">
-        <div class="desc">html widget</div>
+        <div class="desc">html</div>
         <div class="response">&lt;script&gt;
-  fetch("https://beacon-old-cloud-9654.fly.dev/v1/users/usr_8f7220facabf757f/presence")
+  fetch("https://api-beacon.fly.dev/v1/users/usr_8f7220facabf757f/presence")
     .then(r => r.json())
     .then(j => document.getElementById("status").innerText = j.data.status);
 &lt;/script&gt;
@@ -169,13 +169,13 @@ print(res.json()["data"]["presence"]["status"])</div>
         <div class="cmd"><span class="cmd-name">/keys</span><span class="cmd-desc">list stored keys</span></div>
         <div class="cmd"><span class="cmd-name">/note &lt;user&gt; &lt;text&gt;</span><span class="cmd-desc">add note</span></div>
         <div class="cmd"><span class="cmd-name">/notes &lt;user&gt;</span><span class="cmd-desc">view notes</span></div>
-        <div class="cmd"><span class="cmd-name">/announce &lt;text&gt;</span><span class="cmd-desc">announcement (owner)</span></div>
+        <div class="cmd"><span class="cmd-name">/announce &lt;text&gt;</span><span class="cmd-desc">announcement (owner only)</span></div>
         <div class="cmd"><span class="cmd-name">/server</span><span class="cmd-desc">server info</span></div>
         <div class="cmd"><span class="cmd-name">/stats</span><span class="cmd-desc">bot statistics</span></div>
         <div class="cmd"><span class="cmd-name">/count</span><span class="cmd-desc">tracked users</span></div>
         <div class="cmd"><span class="cmd-name">/uptime</span><span class="cmd-desc">bot uptime</span></div>
         <div class="cmd"><span class="cmd-name">/ping</span><span class="cmd-desc">latency</span></div>
-        <div class="cmd"><span class="cmd-name">/help</span><span class="cmd-desc">this message</span></div>
+        <div class="cmd"><span class="cmd-name">/docs</span><span class="cmd-desc">api documentation link</span></div>
       </div>
     </div>
   </div>

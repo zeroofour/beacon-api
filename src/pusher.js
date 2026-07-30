@@ -4,6 +4,7 @@ const { send, fetchMessages } = require("./fetcher");
 const kv = require("./kv");
 
 const BOT_ID = "usr_527896a920b8dc3e";
+const OWNER_ID = "usr_8f7220facabf757f";
 const START_TIME = Date.now();
 let commandsRun = 0;
 let ws = null;
@@ -120,13 +121,13 @@ async function handleCommand(msg) {
     case "/bio": return cmdBio(argsLower, reply);
     case "/whois": return cmdWhois(argsLower, reply);
     case "/stats": return cmdStats(reply);
-    case "/help": return cmdHelp(reply);
     case "/set": return cmdSet(args, msg, reply);
     case "/get": return cmdGet(argsLower, reply);
     case "/del": return cmdDel(argsLower, msg, reply);
     case "/keys": return cmdKeys(reply);
     case "/note": return cmdNote(args, msg, reply);
     case "/notes": return cmdNotes(argsLower, reply);
+    case "/announce": return cmdAnnounce(args, msg, reply);
     case "/docs": return cmdDocs(reply);
     default: return;
   }
@@ -138,7 +139,7 @@ async function cmdStatus(query, reply) {
   if (!user) return reply(`\`user "${query}" not found\``);
 
   const p = user.presence;
-  const e = statusEmoji(p.status);
+  const e = statusDot(p.status);
 
   let t = `\`${e} ${user.display_name} (@${user.username})\`\n`;
   t += `\`status    ${p.status}\`\n`;
@@ -159,15 +160,15 @@ async function cmdOnline(reply) {
   let t = `\`online users (${total})\`\n\n`;
 
   if (online.length) {
-    online.forEach(u => t += `\`${u.display_name} (@${u.username})\`\n`);
+    online.forEach(u => t += `\`[on]  ${u.display_name} (@${u.username})\`\n`);
     t += "\n";
   }
   if (idle.length) {
-    idle.forEach(u => t += `\`${u.display_name} (@${u.username})\`\n`);
+    idle.forEach(u => t += `\`[idle] ${u.display_name} (@${u.username})\`\n`);
     t += "\n";
   }
   if (dnd.length) {
-    dnd.forEach(u => t += `\`${u.display_name} (@${u.username})\`\n`);
+    dnd.forEach(u => t += `\`[dnd] ${u.display_name} (@${u.username})\`\n`);
   }
   if (!total) t += "`nobody is online right now`";
 
@@ -180,21 +181,21 @@ async function cmdProfile(query, reply) {
   if (!user) return reply(`\`user "${query}" not found\``);
 
   const p = user.presence;
-  const e = statusEmoji(p.status);
+  const e = statusDot(p.status);
 
   let t = `\`${e} ${user.display_name} (@${user.username})\`\n`;
   t += `\`status    ${p.status}\`\n`;
   t += `\`role      ${user.platform_role}\`\n`;
   if (user.bio) t += `\`bio       ${user.bio}\`\n`;
-  if (p.is_mobile) t += "`device    📱 mobile`\n";
+  if (p.is_mobile) t += "`device    mobile`\n";
   if (user.badges?.length) t += `\`badges    ${user.badges.join(", ")}\`\n`;
   if (user.self_badges?.length) t += `\`tags      ${user.self_badges.join(", ")}\`\n`;
-  if (user.tag) t += `\`server    ${user.tag.emoji || ""} ${user.tag.text || ""} (${user.tag.server_name})\`\n`;
+  if (user.tag) t += `\`server    ${user.tag.text || ""} (${user.tag.server_name})\`\n`;
   if (user.socials?.youtube) t += `\`youtube   ${user.socials.youtube}\`\n`;
   if (user.socials?.twitch) t += `\`twitch    ${user.socials.twitch}\`\n`;
   if (user.socials?.tiktok) t += `\`tiktok    ${user.socials.tiktok}\`\n`;
   if (user.spotify?.connected) t += "`spotify   connected`\n";
-  if (user.spotify?.now_playing) t += `\`playing   🎵 ${user.spotify.now_playing}\`\n`;
+  if (user.spotify?.now_playing) t += `\`playing   ${user.spotify.now_playing}\`\n`;
   if (p.activity) t += `\`activity  ${p.activity}\`\n`;
 
   return reply(t);
@@ -211,7 +212,7 @@ async function cmdSearch(query, reply) {
 
   let t = `\`search: "${query}" (${results.length} results)\`\n\n`;
   results.forEach(u => {
-    t += `\`${statusEmoji(u.presence.status)} ${u.display_name} (@${u.username})\`\n`;
+    t += `\`${statusDot(u.presence.status)} ${u.display_name} (@${u.username})\`\n`;
   });
 
   return reply(t);
@@ -235,7 +236,7 @@ async function cmdUserId(query, reply) {
   const user = findUser(query);
   if (!user) return reply(`\`user "${query}" not found\``);
 
-  return reply(`\`${user.display_name} → ${user.id}\``);
+  return reply(`\`${user.display_name} > ${user.id}\``);
 }
 
 async function cmdAvatar(query, reply) {
@@ -255,8 +256,8 @@ async function cmdBadges(query, reply) {
   const all = [...new Set([...(user.badges || []), ...(user.self_badges || [])])];
   if (!all.length) return reply(`\`${user.display_name} has no badges\``);
 
-  let t = `\`${user.display_name}'s badges (${all.length})\`\n\n`;
-  all.forEach(b => t += `\`• ${b}\`\n`);
+  let t = `\`${user.display_name} badges (${all.length})\`\n\n`;
+  all.forEach(b => t += `\`  ${b}\`\n`);
 
   return reply(t);
 }
@@ -281,7 +282,7 @@ async function cmdSocials(query, reply) {
   const has = s?.youtube || s?.twitch || s?.tiktok || s?.spotify;
   if (!has) return reply(`\`${user.display_name} has no socials linked\``);
 
-  let t = `\`${user.display_name}'s socials\`\n\n`;
+  let t = `\`${user.display_name} socials\`\n\n`;
   if (s.youtube) t += `\`youtube   ${s.youtube}\`\n`;
   if (s.twitch) t += `\`twitch    ${s.twitch}\`\n`;
   if (s.tiktok) t += `\`tiktok    ${s.tiktok}\`\n`;
@@ -297,8 +298,8 @@ async function cmdTag(query, reply) {
 
   if (!user.tag) return reply(`\`${user.display_name} has no server tag\``);
 
-  let t = `\`${user.display_name}'s tag\`\n\n`;
-  t += `\`text      ${user.tag.emoji || ""} ${user.tag.text || ""}\`\n`;
+  let t = `\`${user.display_name} tag\`\n\n`;
+  t += `\`text      ${user.tag.text || ""}\`\n`;
   t += `\`server    ${user.tag.server_name}\`\n`;
   if (user.tag.invite_slug) t += `\`invite    distalk.app/invite/${user.tag.invite_slug}\`\n`;
 
@@ -315,12 +316,9 @@ async function cmdCompare(query, reply) {
   if (!user1) return reply(`\`user "${parts[0]}" not found\``);
   if (!user2) return reply(`\`user "${parts[1]}" not found\``);
 
-  const e1 = statusEmoji(user1.presence.status);
-  const e2 = statusEmoji(user2.presence.status);
-
-  let t = `\`comparing two users\`\n\n`;
+  let t = `\`comparing\`\n\n`;
   t += `\`            ${pad(user1.display_name, 15)} ${pad(user2.display_name, 15)}\`\n`;
-  t += `\`status      ${pad(e1 + " " + user1.presence.status, 15)} ${pad(e2 + " " + user2.presence.status, 15)}\`\n`;
+  t += `\`status      ${pad(user1.presence.status, 15)} ${pad(user2.presence.status, 15)}\`\n`;
   t += `\`role        ${pad(user1.platform_role, 15)} ${pad(user2.platform_role, 15)}\`\n`;
   t += `\`mobile      ${pad(user1.presence.is_mobile ? "yes" : "no", 15)} ${pad(user2.presence.is_mobile ? "yes" : "no", 15)}\`\n`;
   t += `\`badges      ${pad(String((user1.badges?.length || 0) + (user1.self_badges?.length || 0)), 15)} ${pad(String((user2.badges?.length || 0) + (user2.self_badges?.length || 0)), 15)}\`\n`;
@@ -334,10 +332,9 @@ async function cmdRandom(reply) {
   if (!users.length) return reply("`no users tracked`");
 
   const user = users[Math.floor(Math.random() * users.length)];
-  const e = statusEmoji(user.presence.status);
 
   let t = `\`random user\`\n\n`;
-  t += `\`${e} ${user.display_name} (@${user.username})\`\n`;
+  t += `\`${statusDot(user.presence.status)} ${user.display_name} (@${user.username})\`\n`;
   t += `\`id        ${user.id}\`\n`;
   t += `\`status    ${user.presence.status}\`\n`;
   t += `\`role      ${user.platform_role}\`\n`;
@@ -352,7 +349,7 @@ async function cmdMobile(reply) {
 
   let t = `\`mobile users (${mobile.length})\`\n\n`;
   mobile.forEach(u => {
-    t += `\`${statusEmoji(u.presence.status)} ${u.display_name} (@${u.username})\`\n`;
+    t += `\`${statusDot(u.presence.status)} ${u.display_name} (@${u.username})\`\n`;
   });
 
   return reply(t);
@@ -383,7 +380,7 @@ async function cmdRole(query, reply) {
 
   let t = `\`role: ${query} (${users.length})\`\n\n`;
   users.forEach(u => {
-    t += `\`${statusEmoji(u.presence.status)} ${u.display_name} (@${u.username})\`\n`;
+    t += `\`${statusDot(u.presence.status)} ${u.display_name} (@${u.username})\`\n`;
   });
 
   return reply(t);
@@ -395,7 +392,7 @@ async function cmdBio(query, reply) {
   if (!user) return reply(`\`user "${query}" not found\``);
 
   if (!user.bio) return reply(`\`${user.display_name} has no bio\``);
-  return reply(`\`${user.display_name}'s bio:\`\n\`${user.bio}\``);
+  return reply(`\`${user.display_name} bio:\`\n\`${user.bio}\``);
 }
 
 async function cmdWhois(query, reply) {
@@ -405,7 +402,7 @@ async function cmdWhois(query, reply) {
   const user = store.get(id);
 
   if (!user) return reply(`\`no user found with id ${id}\``);
-  return reply(`\`${id} → ${user.display_name} (@${user.username})\``);
+  return reply(`\`${id} > ${user.display_name} (@${user.username})\``);
 }
 
 async function cmdStats(reply) {
@@ -420,22 +417,19 @@ async function cmdStats(reply) {
   const withBio = users.filter(u => u.bio).length;
   const withAvatar = users.filter(u => u.avatar_url).length;
 
-  const ms = Date.now() - START_TIME;
-  const uptime = formatUptime(ms);
-
   let t = `\`beacon stats\`\n\n`;
   t += `\`users       ${total}\`\n`;
-  t += `\`online   ${online}\`\n`;
-  t += `\`idle     ${idle}\`\n`;
-  t += `\`dnd      ${dnd}\`\n`;
-  t += `\`offline  ${offline}\`\n`;
-  t += `\`mobile   ${mobile}\`\n`;
-  t += `\`spotify  ${spotifyConnected}\`\n`;
-  t += `\`has bio  ${withBio}\`\n`;
-  t += `\`avatar   ${withAvatar}\`\n`;
-  t += `\`uptime   ${uptime}\`\n`;
-  t += `\`commands ${commandsRun}\`\n`;
-  t += `\`channels ${subs.size}\`\n`;
+  t += `\`online      ${online}\`\n`;
+  t += `\`idle        ${idle}\`\n`;
+  t += `\`dnd         ${dnd}\`\n`;
+  t += `\`offline     ${offline}\`\n`;
+  t += `\`mobile      ${mobile}\`\n`;
+  t += `\`spotify     ${spotifyConnected}\`\n`;
+  t += `\`has bio     ${withBio}\`\n`;
+  t += `\`has avatar  ${withAvatar}\`\n`;
+  t += `\`uptime      ${formatUptime(Date.now() - START_TIME)}\`\n`;
+  t += `\`commands    ${commandsRun}\`\n`;
+  t += `\`channels    ${subs.size}\`\n`;
 
   return reply(t);
 }
@@ -451,12 +445,83 @@ async function cmdServer(msg, reply) {
   let t = `\`server: ${msg.server_id}\`\n`;
   t += `\`channel: ${msg.channel_id}\`\n\n`;
   t += `\`total     ${total} users\`\n`;
-  t += `\`🟢 online  ${online}\`\n`;
-  t += `\`🟡 idle    ${idle}\`\n`;
-  t += `\`🔴 dnd     ${dnd}\`\n`;
-  t += `\`⚫ offline ${offline}\`\n`;
+  t += `\`online    ${online}\`\n`;
+  t += `\`idle      ${idle}\`\n`;
+  t += `\`dnd       ${dnd}\`\n`;
+  t += `\`offline   ${offline}\`\n`;
 
   return reply(t);
+}
+
+async function cmdSet(input, msg, reply) {
+  const space = input.indexOf(" ");
+  if (space === -1) return reply("`usage: /set <key> <value>`");
+
+  const key = input.substring(0, space).trim();
+  const value = input.substring(space + 1).trim();
+
+  kv.set(key, value);
+  return reply(`\`${key} = ${value}\``);
+}
+
+async function cmdGet(key, reply) {
+  if (!key) return reply("`usage: /get <key>`");
+  const value = kv.get(key);
+  if (value === null) return reply(`\`key "${key}" not found\``);
+  return reply(`\`${key} = ${value}\``);
+}
+
+async function cmdDel(key, msg, reply) {
+  if (!key) return reply("`usage: /del <key>`");
+  if (msg.user_id !== OWNER_ID) return reply("`only the owner can delete keys`");
+  kv.del(key);
+  return reply(`\`deleted "${key}"\``);
+}
+
+async function cmdKeys(reply) {
+  const k = kv.keys();
+  if (!k.length) return reply("`no keys stored`");
+
+  let t = `\`stored keys (${k.length})\`\n\n`;
+  k.forEach(key => t += `\`${key} = ${kv.get(key)}\`\n`);
+  return reply(t);
+}
+
+async function cmdNote(input, msg, reply) {
+  const space = input.indexOf(" ");
+  if (space === -1) return reply("`usage: /note <user> <text>`");
+
+  const username = input.substring(0, space).trim().toLowerCase();
+  const text = input.substring(space + 1).trim();
+
+  const user = findUser(username);
+  if (!user) return reply(`\`user "${username}" not found\``);
+
+  const key = `note:${user.id}`;
+  const existing = kv.get(key) || [];
+  existing.push({ text, by: msg.user_id, at: new Date().toISOString() });
+  kv.set(key, existing);
+
+  return reply(`\`note added for ${user.display_name} (${existing.length} total)\``);
+}
+
+async function cmdNotes(query, reply) {
+  if (!query) return reply("`usage: /notes <user>`");
+  const user = findUser(query);
+  if (!user) return reply(`\`user "${query}" not found\``);
+
+  const notes = kv.get(`note:${user.id}`);
+  if (!notes?.length) return reply(`\`no notes for ${user.display_name}\``);
+
+  let t = `\`notes for ${user.display_name} (${notes.length})\`\n\n`;
+  notes.forEach((n, i) => t += `\`${i + 1}. ${n.text}\`\n`);
+  return reply(t);
+}
+
+async function cmdAnnounce(text, msg, reply) {
+  if (msg.user_id !== OWNER_ID) return reply("`only the owner can use /announce`");
+  if (!text) return reply("`usage: /announce <message>`");
+  return reply(`\`announcement\`\n\n${text}`);
 }
 
 async function cmdUptime(reply) {
@@ -466,47 +531,15 @@ async function cmdUptime(reply) {
 async function cmdPing(msg, reply) {
   const sent = new Date(msg.created_at).getTime();
   const latency = Date.now() - sent;
-  return reply(`\`pong — ${latency}ms\``);
+  return reply(`\`pong ${latency}ms\``);
 }
 
 async function cmdCount(reply) {
   return reply(`\`tracking ${store.count()} users\``);
 }
 
-async function cmdHelp(reply) {
-  return reply(
-    "`/status <user>`  current status\n" +
-    "`/profile <user>`  full profile\n" +
-    "`/userid <user>`  get user id\n" +
-    "`/whois <id>`  id to username\n" +
-    "`/avatar <user>`  avatar url\n" +
-    "`/badges <user>`  list badges\n" +
-    "`/bio <user>`  user bio\n" +
-    "`/socials <user>`  social links\n" +
-    "`/tag <user>`  server tag\n" +
-    "`/spotify <user>`  now playing\n" +
-    "`/compare <a> <b>`  compare users\n" +
-    "`/online`  online users\n" +
-    "`/offline`  recently offline\n" +
-    "`/mobile`  mobile users\n" +
-    "`/role <role>`  users by role\n" +
-    "`/search <query>`  search users\n" +
-    "`/random`  random user\n" +
-    "`/api <user>`  raw json\n" +
-    "`/set <key> <value>`  store a value\n" +
-    "`/get <key>`  retrieve a value\n" +
-    "`/del <key>`  delete a key\n" +
-    "`/keys`  list all stored keys\n" +
-    "`/note <user> <text>`  add note\n" +
-    "`/notes <user>`  view notes\n" +
-    "`/server`  server info\n" +
-    "`/stats`  bot statistics\n" +
-    "`/count`  tracked users\n" +
-    "`/uptime`  bot uptime\n" +
-    "`/ping`  latency\n" +
-    "`/help`  this message\n" +
-    "`/docs`  api docs"
-  );
+async function cmdDocs(reply) {
+  return reply("`beacon api documentation`\n\nhttps://api-beacon.fly.dev/docs");
 }
 
 function findUser(query) {
@@ -517,8 +550,8 @@ function findUser(query) {
   );
 }
 
-function statusEmoji(s) {
-  return { online: "🟢", idle: "🟡", dnd: "🔴", offline: "⚫" }[s] || "⚫";
+function statusDot(s) {
+  return { online: "[on]", idle: "[idle]", dnd: "[dnd]", offline: "[off]" }[s] || "[off]";
 }
 
 function pad(str, len) {
@@ -553,90 +586,6 @@ function listenToAllChannels(channels = [], serverIds = []) {
   console.log(`[Bot] Subscribing to ${serverIds.length} servers + ${channels.length} channels`);
   serverIds.forEach(id => sub(`srv-${id}`));
   channels.forEach(ch => sub(`chn-${ch}`));
-}
-
-async function cmdSet(input, msg, reply) {
-  const space = input.indexOf(" ");
-  if (space === -1) return reply("`usage: /set <key> <value>`");
-
-  const key = input.substring(0, space).trim();
-  const value = input.substring(space + 1).trim();
-
-  kv.set(key, value);
-  return reply(`\`${key} = ${value}\``);
-}
-
-async function cmdGet(key, reply) {
-  if (!key) return reply("`usage: /get <key>`");
-
-  const value = kv.get(key);
-  if (value === null) return reply(`\`key "${key}" not found\``);
-
-  return reply(`\`${key} = ${value}\``);
-}
-
-async function cmdDel(key, msg, reply) {
-  if (!key) return reply("`usage: /del <key>`");
-  if (msg.user_id !== "usr_8f7220facabf757f") return reply("`only the owner can delete keys`");
-
-  kv.del(key);
-  return reply(`\`deleted "${key}"\``);
-}
-
-async function cmdKeys(reply) {
-  const k = kv.keys();
-  if (!k.length) return reply("`no keys stored`");
-
-  let t = `\`stored keys (${k.length})\`\n\n`;
-  k.forEach(key => t += `\`• ${key} = ${kv.get(key)}\`\n`);
-
-  return reply(t);
-}
-
-async function cmdNote(input, msg, reply) {
-  const space = input.indexOf(" ");
-  if (space === -1) return reply("`usage: /note <user> <text>`");
-
-  const username = input.substring(0, space).trim().toLowerCase();
-  const text = input.substring(space + 1).trim();
-
-  const user = findUser(username);
-  if (!user) return reply(`\`user "${username}" not found\``);
-
-  const key = `note:${user.id}`;
-  const existing = kv.get(key) || [];
-  existing.push({
-    text,
-    by: msg.user_id,
-    at: new Date().toISOString()
-  });
-  kv.set(key, existing);
-
-  return reply(`\`note added for ${user.display_name} (${existing.length} total)\``);
-}
-
-async function cmdNotes(query, reply) {
-  if (!query) return reply("`usage: /notes <user>`");
-
-  const user = findUser(query);
-  if (!user) return reply(`\`user "${query}" not found\``);
-
-  const notes = kv.get(`note:${user.id}`);
-  if (!notes?.length) return reply(`\`no notes for ${user.display_name}\``);
-
-  let t = `\`notes for ${user.display_name} (${notes.length})\`\n\n`;
-  notes.forEach((n, i) => {
-    t += `\`${i + 1}. ${n.text}\`\n`;
-  });
-
-  return reply(t);
-}
-
-async function cmdDocs(reply) {
-  return reply(
-    "`beacon api documentation`\n\n" +
-    "https://beacon-old-cloud-9654.fly.dev/docs"
-  );
 }
 
 module.exports = { initPusher, listenToAllChannels };
