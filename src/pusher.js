@@ -129,6 +129,7 @@ async function handleCommand(msg) {
     case "/notes": return cmdNotes(argsLower, reply);
     case "/announce": return cmdAnnounce(args, msg, reply);
     case "/docs": return cmdDocs(reply);
+    case "/privacy": return cmdPrivacy(reply);
     default: return;
   }
 }
@@ -580,6 +581,10 @@ function formatUptime(ms) {
   if (m > 0) t += `${m}m `;
   t += `${s}s`;
   return t;
+}
+
+async function cmdPrivacy(reply) {
+  return reply("`beacon privacy policy`\n\nhttps://api-beacon.fly.dev/privacy");
 }
 
 function listenToAllChannels(channels = [], serverIds = []) {
