@@ -74,7 +74,11 @@ async function checkMessages() {
     if (replied.has(msg.id)) continue;
 
     const age = Date.now() - new Date(msg.created_at).getTime();
-    if (age > 30000) continue;
+        console.log(`[Debug] msg ${msg.id} age: ${age}ms`);
+        if (age > 15000) {
+        console.log(`[Debug] skipping old message (${age}ms)`);
+        continue;
+        }
 
     replied.add(msg.id);
     if (replied.size > 500) replied.delete(replied.values().next().value);
