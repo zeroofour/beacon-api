@@ -127,6 +127,7 @@ async function handleCommand(msg) {
     case "/keys": return cmdKeys(reply);
     case "/note": return cmdNote(args, msg, reply);
     case "/notes": return cmdNotes(argsLower, reply);
+    case "/docs": return cmdDocs(reply);
     default: return;
   }
 }
@@ -503,7 +504,8 @@ async function cmdHelp(reply) {
     "`/count`  tracked users\n" +
     "`/uptime`  bot uptime\n" +
     "`/ping`  latency\n" +
-    "`/help`  this message"
+    "`/help`  this message\n" +
+    "`/docs`  api docs"
   );
 }
 
@@ -628,6 +630,13 @@ async function cmdNotes(query, reply) {
   });
 
   return reply(t);
+}
+
+async function cmdDocs(reply) {
+  return reply(
+    "`beacon api documentation`\n\n" +
+    "https://beacon-old-cloud-9654.fly.dev/docs"
+  );
 }
 
 module.exports = { initPusher, listenToAllChannels };
