@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Beacon Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 16px;
+      padding: 32px;
+      width: 400px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #222;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .status-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 3px solid #111;
+      position: absolute;
+      bottom: 0;
+      right: 0;
+    }
+    .status-online { background: #23a559; }
+    .status-idle { background: #f0b232; }
+    .status-dnd { background: #f23f43; }
+    .status-offline { background: #80848e; }
+    .name { font-size: 20px; font-weight: 600; }
+    .username { color: #888; font-size: 14px; }
+    .section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #222;
+    }
+    .section-title {
+      color: #888;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .field {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 14px;
+    }
+    .field-label { color: #888; }
+    .field-value { color: #fff; }
+    .spotify {
+      background: #1db954;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 16px;
+      font-size: 13px;
+    }
+    .badge {
+      display: inline-block;
+      background: #222;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 12px;
+      margin: 2px;
+      color: #a78bfa;
+    }
+    .kv {
+      background: #0d0d0d;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #4ade80;
+      white-space: pre;
+    }
+    .live {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #888;
+      margin-top: 16px;
+    }
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #23a559;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .powered {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 11px;
+      color: #555;
+    }
+    .powered a { color: #a78bfa; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div style="text-align:center;color:#888;padding:20px;">connecting to beacon...</div>
+  </div>
+
+  <script>
+    const USER_ID = "usr_8f7220facabf757f";
+
+    async function fetchPresence() {
+      try {
+        const res = await fetch(`/v1/users/${USER_ID}`);
+        const json = await res.json();
+
+        if (!json.success) {
+          document.getElementById("card").innerHTML = '<div style="text-align:center;color:#f87171;padding:20px;">user not found</div>';
+          return;
+        }
+
+        const d = json.data;
+        const p = d.presence;
+
+        let html = `
+          <div class="header">
+            <div class="avatar">
+              ${d.avatar_url ? `<img src="${d.avatar_url}" />` : ""}
+              <div class="status-dot status-${p.status}"></div>
+            </div>
+            <div>
+              <div class="name">${d.display_name}</div>
+              <div class="username">@${d.username}</div>
+            </div>
+          </div>
+          <div class="section">
+            <div class="section-title">presence</div>
+            <div class="field">
+              <span class="field-label">status</span>
+              <span class="field-value">${p.status}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">mobile</span>
+              <span class="field-value">${p.is_mobile ? "yes" : "no"}</span>
+            </div>
+        `;
+
+        if (p.custom_status?.emoji || p.custom_status?.text) {
+          html += `
+            <div class="field">
+              <span class="field-label">custom</span>
+              <span class="field-value">${p.custom_status.emoji || ""} ${p.custom_status.text || ""}</span>
+            </div>
+          `;
+        }
+
+        if (p.activity) {
+          html += `
+            <div class="field">
+              <span class="field-label">activity</span>
+              <span class="field-value">${p.activity}</span>
+            </div>
+          `;
+        }
+
+        html += `</div>`;
+
+        if (d.bio) {
+          html += `
+            <div class="section">
+              <div class="section-title">about me</div>
+              <div style="font-size:14px;color:#ccc;">${d.bio}</div>
+            </div>
+          `;
+        }
+
+        if (d.spotify?.now_playing) {
+          html += `<div class="spotify">listening to: ${d.spotify.now_playing}</div>`;
+        }
+
+        if (d.badges?.length || d.self_badges?.length) {
+          const all = [...new Set([...(d.badges || []), ...(d.self_badges || [])])];
+          html += `
+            <div class="section">
+              <div class="section-title">badges</div>
+              ${all.map(b => `<span class="badge">${b}</span>`).join("")}
+            </div>
+          `;
+        }
+
+        if (d.kv && Object.keys(d.kv).length) {
+          html += `
+            <div class="section">
+              <div class="section-title">kv store</div>
+              <div class="kv">${JSON.stringify(d.kv, null, 2)}</div>
+            </div>
+          `;
+        }
+
+        html += `
+          <div class="live">
+            <div class="live-dot"></div>
+            live - updating every 10s via beacon api
+          </div>
+          <div class="powered">
+            powered by <a href="/docs" target="_blank">beacon</a>
+          </div>
+        `;
+
+        document.getElementById("card").innerHTML = html;
+      } catch (e) {
+        document.getElementById("card").innerHTML = `<div style="text-align:center;color:#f87171;padding:20px;">error: ${e.message}</div>`;
+      }
+    }
+
+    fetchPresence();
+    setInterval(fetchPresence, 10000);
+  </script>
+</body>
+</html>
