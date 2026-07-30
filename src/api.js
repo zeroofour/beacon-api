@@ -323,7 +323,6 @@ ws.onmessage = (e) => {
         <div class="cmd"><span class="cmd-name">/keys</span><span class="cmd-desc">list stored keys</span></div>
         <div class="cmd"><span class="cmd-name">/note &lt;user&gt; &lt;text&gt;</span><span class="cmd-desc">add note</span></div>
         <div class="cmd"><span class="cmd-name">/notes &lt;user&gt;</span><span class="cmd-desc">view notes</span></div>
-        <div class="cmd"><span class="cmd-name">/announce &lt;text&gt;</span><span class="cmd-desc">announcement (owner)</span></div>
         <div class="cmd"><span class="cmd-name">/server</span><span class="cmd-desc">server info</span></div>
         <div class="cmd"><span class="cmd-name">/stats</span><span class="cmd-desc">bot statistics</span></div>
         <div class="cmd"><span class="cmd-name">/count</span><span class="cmd-desc">tracked users</span></div>
