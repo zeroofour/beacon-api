@@ -125,11 +125,13 @@ async function handleCommand(msg) {
     case "/get": return cmdGet(argsLower, reply);
     case "/del": return cmdDel(argsLower, msg, reply);
     case "/keys": return cmdKeys(reply);
+    case "/kv": return cmdKV(args, msg, reply);
     case "/note": return cmdNote(args, msg, reply);
     case "/notes": return cmdNotes(argsLower, reply);
     case "/announce": return cmdAnnounce(args, msg, reply);
     case "/docs": return cmdDocs(reply);
     case "/privacy": return cmdPrivacy(reply);
+    case "/who": return cmdWho(argsLower, msg, reply);
     default: return;
   }
 }
@@ -585,6 +587,82 @@ function formatUptime(ms) {
 
 async function cmdPrivacy(reply) {
   return reply("`beacon privacy policy`\n\nhttps://api-beacon.onrender.com/privacy");
+}
+
+async function cmdKV(input, msg, reply) {
+  const parts = input.split(" ").filter(Boolean);
+
+  if (parts[0] === "set" && parts.length >= 3) {
+    const key = parts[1];
+    const value = parts.slice(2).join(" ");
+    kv.set(`kv:${msg.user_id}:${key}`, value);
+    return reply(`\`${key} = ${value}\``);
+  }
+
+  if (parts[0] === "del" && parts.length >= 2) {
+    const key = parts[1];
+    kv.del(`kv:${msg.user_id}:${key}`);
+    return reply(`\`deleted ${key}\``);
+  }
+
+  const userId = parts[0] ? (findUser(parts[0])?.id || msg.user_id) : msg.user_id;
+  const user = store.get(userId);
+  const name = user?.display_name || userId;
+
+  const prefix = `kv:${userId}:`;
+  const allKeys = kv.keys();
+  const userKV = {};
+  allKeys.forEach(k => {
+    if (k.startsWith(prefix)) userKV[k.replace(prefix, "")] = kv.get(k);
+  });
+
+  const json = JSON.stringify(userKV, null, 2);
+
+  let t = `\`beacon kv for ${name}\`\n\n`;
+  t += `\`current kv items\`\n`;
+  json.split("\n").forEach(line => t += `\`${line}\`\n`);
+  t += "\n";
+  t += `to access a key within a script, pull your beacon object\n`;
+  t += `\`https://api-beacon.onrender.com/v1/users/${userId}\`\n`;
+  t += `and the json path is \`.data.kv.KEY_NAME\`\n`;
+  t += `when using the socket it will be \`.d.kv.KEY_NAME\`\n\n`;
+  t += `\`set a key:\`\n`;
+  t += `\`/kv set <key> <value>\`\n\n`;
+  t += `\`delete a key:\`\n`;
+  t += `\`/kv del <key>\`\n\n`;
+  t += `\`view someone's kv:\`\n`;
+  t += `\`/kv <username>\``;
+
+  return reply(t);
+}
+
+async function cmdWho(query, msg, reply) {
+  const userId = query || msg.user_id;
+  const user = query ? findUser(query) : store.get(msg.user_id);
+
+  if (!user) return reply(`\`user "${query}" not found\``);
+
+  const prefix = `kv:${user.id}:`;
+  const allKeys = kv.keys();
+  const userKV = {};
+  allKeys.forEach(k => {
+    if (k.startsWith(prefix)) userKV[k.replace(prefix, "")] = kv.get(k);
+  });
+
+  const kvKeys = Object.keys(userKV);
+  const note = userKV.note || "None";
+
+  let t = `\`beacon whois\`\n\n`;
+  t += `\`api url\`\n`;
+  t += `\`api-beacon.onrender.com/v1/users/${user.id}\`\n\n`;
+  t += `\`kv keys\`\n`;
+  t += kvKeys.length ? kvKeys.map(k => `\`${k} = ${userKV[k]}\``).join("\n") + "\n" : "`None`\n";
+  t += "\n";
+  t += `\`note (kv.note)\`\n`;
+  t += `\`${note}\`\n\n`;
+  t += `\`id: ${user.id}\``;
+
+  return reply(t);
 }
 
 function listenToAllChannels(channels = [], serverIds = []) {
