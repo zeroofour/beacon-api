@@ -4,6 +4,7 @@ const { initPusher, listenToAllChannels } = require("./src/pusher");
 const { fetchAllUsers } = require("./src/fetcher");
 const store = require("./src/store");
 const api = require("./src/api");
+const { setupGitHubWebhook } = require("./src/github");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,6 +12,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(api);
+setupGitHubWebhook(app);
 
 let serverIds = [];
 let channelIds = [];
