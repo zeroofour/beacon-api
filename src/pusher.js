@@ -1,6 +1,7 @@
 const WebSocket = require("ws");
 const store = require("./store");
 const { send, fetchMessages } = require("./fetcher");
+const kv = require("./kv");
 
 const BOT_ID = "usr_527896a920b8dc3e";
 const START_TIME = Date.now();
@@ -120,6 +121,12 @@ async function handleCommand(msg) {
     case "/whois": return cmdWhois(argsLower, reply);
     case "/stats": return cmdStats(reply);
     case "/help": return cmdHelp(reply);
+    case "/set": return cmdSet(args, msg, reply);
+    case "/get": return cmdGet(argsLower, reply);
+    case "/del": return cmdDel(argsLower, msg, reply);
+    case "/keys": return cmdKeys(reply);
+    case "/note": return cmdNote(args, msg, reply);
+    case "/notes": return cmdNotes(argsLower, reply);
     default: return;
   }
 }
@@ -485,6 +492,12 @@ async function cmdHelp(reply) {
     "`/search <query>`  search users\n" +
     "`/random`  random user\n" +
     "`/api <user>`  raw json\n" +
+    "`/set <key> <value>`  store a value\n" +
+    "`/get <key>`  retrieve a value\n" +
+    "`/del <key>`  delete a key\n" +
+    "`/keys`  list all stored keys\n" +
+    "`/note <user> <text>`  add note\n" +
+    "`/notes <user>`  view notes\n" +
     "`/server`  server info\n" +
     "`/stats`  bot statistics\n" +
     "`/count`  tracked users\n" +
@@ -538,6 +551,83 @@ function listenToAllChannels(channels = [], serverIds = []) {
   console.log(`[Bot] Subscribing to ${serverIds.length} servers + ${channels.length} channels`);
   serverIds.forEach(id => sub(`srv-${id}`));
   channels.forEach(ch => sub(`chn-${ch}`));
+}
+
+async function cmdSet(input, msg, reply) {
+  const space = input.indexOf(" ");
+  if (space === -1) return reply("`usage: /set <key> <value>`");
+
+  const key = input.substring(0, space).trim();
+  const value = input.substring(space + 1).trim();
+
+  kv.set(key, value);
+  return reply(`\`${key} = ${value}\``);
+}
+
+async function cmdGet(key, reply) {
+  if (!key) return reply("`usage: /get <key>`");
+
+  const value = kv.get(key);
+  if (value === null) return reply(`\`key "${key}" not found\``);
+
+  return reply(`\`${key} = ${value}\``);
+}
+
+async function cmdDel(key, msg, reply) {
+  if (!key) return reply("`usage: /del <key>`");
+  if (msg.user_id !== "usr_8f7220facabf757f") return reply("`only the owner can delete keys`");
+
+  kv.del(key);
+  return reply(`\`deleted "${key}"\``);
+}
+
+async function cmdKeys(reply) {
+  const k = kv.keys();
+  if (!k.length) return reply("`no keys stored`");
+
+  let t = `\`stored keys (${k.length})\`\n\n`;
+  k.forEach(key => t += `\`• ${key} = ${kv.get(key)}\`\n`);
+
+  return reply(t);
+}
+
+async function cmdNote(input, msg, reply) {
+  const space = input.indexOf(" ");
+  if (space === -1) return reply("`usage: /note <user> <text>`");
+
+  const username = input.substring(0, space).trim().toLowerCase();
+  const text = input.substring(space + 1).trim();
+
+  const user = findUser(username);
+  if (!user) return reply(`\`user "${username}" not found\``);
+
+  const key = `note:${user.id}`;
+  const existing = kv.get(key) || [];
+  existing.push({
+    text,
+    by: msg.user_id,
+    at: new Date().toISOString()
+  });
+  kv.set(key, existing);
+
+  return reply(`\`note added for ${user.display_name} (${existing.length} total)\``);
+}
+
+async function cmdNotes(query, reply) {
+  if (!query) return reply("`usage: /notes <user>`");
+
+  const user = findUser(query);
+  if (!user) return reply(`\`user "${query}" not found\``);
+
+  const notes = kv.get(`note:${user.id}`);
+  if (!notes?.length) return reply(`\`no notes for ${user.display_name}\``);
+
+  let t = `\`notes for ${user.display_name} (${notes.length})\`\n\n`;
+  notes.forEach((n, i) => {
+    t += `\`${i + 1}. ${n.text}\`\n`;
+  });
+
+  return reply(t);
 }
 
 module.exports = { initPusher, listenToAllChannels };
