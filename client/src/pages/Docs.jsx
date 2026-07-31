@@ -52,21 +52,23 @@ export default function Docs() {
   const [active, setActive] = useState("overview");
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((e) => e.isIntersecting);
-        if (visible.length) setActive(visible[0].target.id);
-      },
-      { rootMargin: "-80px 0px -70% 0px" }
-    );
+    function updateActive() {
+        let current = "overview";
+        for (const s of SECTIONS) {
+        const el = document.getElementById(s.id);
+        if (el) {
+            const rect = el.getBoundingClientRect();
+            if (rect.top <= 120) current = s.id;
+        }
+        }
+        setActive(current);
+    }
 
-    SECTIONS.forEach((s) => {
-      const el = document.getElementById(s.id);
-      if (el) observer.observe(el);
-    });
+    window.addEventListener("scroll", updateActive, { passive: true });
+    updateActive();
 
-    return () => observer.disconnect();
-  }, []);
+    return () => window.removeEventListener("scroll", updateActive);
+    }, []);
 
   return (
     <div className="flex max-w-6xl mx-auto min-h-[calc(100vh-3.5rem)]">
