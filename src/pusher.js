@@ -145,7 +145,9 @@ async function handleCommand(msg) {
 }
 
 function formatBadge(b) {
-  return `${b.icon || "🏅"} ${b.name}`;
+  if (b.icon) return `${b.icon} ${b.name}`;
+  if (b.lucide) return `[${b.lucide}] ${b.name}`;
+  return b.name;
 }
 
 function formatBadgeList(badges) {
@@ -268,27 +270,32 @@ async function cmdBadges(query, reply) {
   const user = findUser(query);
   if (!user) return reply(`\`user "${query}" not found\``);
 
-  const all = [...(user.badges || []), ...(user.self_badges || [])];
-  if (!all.length) return reply(`\`${user.display_name} has no badges\``);
+  const platform = user.badges || [];
+  const self = user.self_badges || [];
+  const total = platform.length + self.length;
 
-  let t = `\`${user.display_name} — ${all.length} badge${all.length !== 1 ? "s" : ""}\`\n\n`;
+  if (!total) return reply(`\`${user.display_name} has no badges\``);
 
-  const platform = all.filter((b) => b.type === "badge");
-  const self = all.filter((b) => b.type === "self");
+  let t = `\`${user.display_name} — ${total} badge${total !== 1 ? "s" : ""}\`\n\n`;
 
   if (platform.length) {
-    t += "`platform badges`\n";
+    t += "`platform`\n";
     platform.forEach((b) => {
-      const color = b.color ? ` (${b.color})` : "";
-      t += `\`  ${b.icon || "🏅"} ${b.name}${color}\`\n`;
+      t += `\`  ${b.icon} ${b.name}\`\n`;
     });
     t += "\n";
   }
 
   if (self.length) {
-    t += "`self badges`\n";
+    t += "`self`\n";
     self.forEach((b) => {
-      t += `\`  ${b.icon || "🏷️"} ${b.name}\`\n`;
+      if (b.icon) {
+        t += `\`  ${b.icon} ${b.name}\`\n`;
+      } else if (b.lucide) {
+        t += `\`  [${b.lucide}] ${b.name}\`\n`;
+      } else {
+        t += `\`  ${b.name}\`\n`;
+      }
     });
   }
 

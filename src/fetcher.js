@@ -9,32 +9,81 @@ const HEADERS = {
   Referer: "https://distalk.app/",
 };
 
-const BADGE_MAP = {
-  owner: { name: "Owner", icon: "👑" },
-  admin: { name: "Admin", icon: "🛡️" },
-  moderator: { name: "Moderator", icon: "🔨" },
-  staff: { name: "Staff", icon: "⚙️" },
+const PLATFORM_BADGES = {
+  team: { name: "Team", icon: "⚙️" },
+  founder: { name: "Founder", icon: "👑" },
+  verified: { name: "Verified", icon: "✅" },
   supporter: { name: "Supporter", icon: "❤️" },
   early_supporter: { name: "Early Supporter", icon: "🌟" },
-  og: { name: "OG", icon: "🏆" },
-  active_developer: { name: "Active Developer", icon: "💻" },
-  developer: { name: "Developer", icon: "🔧" },
-  designer: { name: "Designer", icon: "🎨" },
+  partner: { name: "Partner", icon: "🤝" },
+  moderator: { name: "Moderator", icon: "🔨" },
+  staff: { name: "Staff", icon: "🛡️" },
+  bot: { name: "Bot", icon: "🤖" },
+  contributor: { name: "Contributor", icon: "📦" },
   bug_hunter: { name: "Bug Hunter", icon: "🐛" },
   translator: { name: "Translator", icon: "🌐" },
-  verified: { name: "Verified", icon: "✅" },
-  partner: { name: "Partner", icon: "🤝" },
-  contributor: { name: "Contributor", icon: "📦" },
-  bot: { name: "Bot", icon: "🤖" },
   premium: { name: "Premium", icon: "💎" },
-  nitro: { name: "Nitro", icon: "🚀" },
   booster: { name: "Booster", icon: "🔮" },
-  streamer: { name: "Streamer", icon: "📺" },
-  artist: { name: "Artist", icon: "🖌️" },
-  musician: { name: "Musician", icon: "🎵" },
-  content_creator: { name: "Content Creator", icon: "🎬" },
-  tester: { name: "Tester", icon: "🧪" },
-  hypesquad: { name: "HypeSquad", icon: "🏠" },
+  og: { name: "OG", icon: "🏆" },
+};
+
+const SELF_BADGES = {
+  active_developer: { name: "Active Developer", lucide: "code-2" },
+  developer: { name: "Developer", lucide: "code-2" },
+  designer: { name: "Designer", lucide: "palette" },
+  streamer: { name: "Streamer", lucide: "radio" },
+  gamer: { name: "Gamer", lucide: "gamepad-2" },
+  night_owl: { name: "Night Owl", lucide: "moon" },
+  coffee_addict: { name: "Coffee Addict", lucide: "coffee" },
+  musician: { name: "Musician", lucide: "music" },
+  artist: { name: "Artist", lucide: "brush" },
+  photographer: { name: "Photographer", lucide: "camera" },
+  content_creator: { name: "Content Creator", lucide: "video" },
+  foodie: { name: "Foodie", lucide: "utensils" },
+  movie_buff: { name: "Movie Buff", lucide: "clapperboard" },
+  bookworm: { name: "Bookworm", lucide: "book-open" },
+  fitness: { name: "Fitness", lucide: "dumbbell" },
+  traveler: { name: "Traveler", lucide: "plane" },
+  scientist: { name: "Scientist", lucide: "flask-conical" },
+  tester: { name: "Tester", lucide: "test-tube-2" },
+  writer: { name: "Writer", lucide: "pen-tool" },
+  student: { name: "Student", lucide: "graduation-cap" },
+  teacher: { name: "Teacher", lucide: "presentation" },
+  pet_lover: { name: "Pet Lover", lucide: "paw-print" },
+  nature_lover: { name: "Nature Lover", lucide: "leaf" },
+  early_bird: { name: "Early Bird", lucide: "sunrise" },
+  anime_fan: { name: "Anime Fan", lucide: "tv" },
+  collector: { name: "Collector", lucide: "archive" },
+  hacker: { name: "Hacker", lucide: "terminal" },
+  explorer: { name: "Explorer", lucide: "compass" },
+
+  lang_en: { name: "Speaks English", emoji: "🇬🇧" },
+  lang_de: { name: "Spricht Deutsch", emoji: "🇩🇪" },
+  lang_es: { name: "Habla Español", emoji: "🇪🇸" },
+  lang_fr: { name: "Parle Français", emoji: "🇫🇷" },
+  lang_pt: { name: "Fala Português", emoji: "🇵🇹" },
+  lang_ru: { name: "Говорит по-русски", emoji: "🇷🇺" },
+  lang_ja: { name: "日本語を話す", emoji: "🇯🇵" },
+  lang_ko: { name: "한국어를 해요", emoji: "🇰🇷" },
+  lang_zh: { name: "说中文", emoji: "🇨🇳" },
+  lang_ar: { name: "يتكلم العربية", emoji: "🇸🇦" },
+  lang_hi: { name: "हिन्दी बोलता है", emoji: "🇮🇳" },
+  lang_it: { name: "Parla Italiano", emoji: "🇮🇹" },
+  lang_nl: { name: "Spreekt Nederlands", emoji: "🇳🇱" },
+  lang_pl: { name: "Mówi po polsku", emoji: "🇵🇱" },
+  lang_tr: { name: "Türkçe konuşuyor", emoji: "🇹🇷" },
+  lang_sv: { name: "Talar Svenska", emoji: "🇸🇪" },
+  lang_no: { name: "Snakker Norsk", emoji: "🇳🇴" },
+  lang_da: { name: "Taler Dansk", emoji: "🇩🇰" },
+  lang_fi: { name: "Puhuu Suomea", emoji: "🇫🇮" },
+  lang_uk: { name: "Говорить Українською", emoji: "🇺🇦" },
+  lang_ro: { name: "Vorbește Română", emoji: "🇷🇴" },
+  lang_vi: { name: "Nói Tiếng Việt", emoji: "🇻🇳" },
+  lang_th: { name: "พูดไทย", emoji: "🇹🇭" },
+  lang_id: { name: "Berbicara Indonesia", emoji: "🇮🇩" },
+  lang_cs: { name: "Mluví Česky", emoji: "🇨🇿" },
+  lang_el: { name: "Μιλάει Ελληνικά", emoji: "🇬🇷" },
+  lang_hu: { name: "Beszél Magyarul", emoji: "🇭🇺" },
 };
 
 let dynamicBadgeMap = {};
@@ -46,75 +95,55 @@ function setBadgeDefinitions(badges) {
   });
 }
 
-function parseBadge(badge) {
-  if (typeof badge === "object" && badge !== null) {
-    const id = (badge.id || badge.name || "unknown").toLowerCase().replace(/\s+/g, "_");
-    const mapped = dynamicBadgeMap[id] || BADGE_MAP[id];
-    return {
-      id,
-      name: badge.label || badge.name || badge.title || mapped?.name || id,
-      icon: badge.emoji || badge.icon || mapped?.icon || "🏅",
-      lucide_icon: mapped?.lucide_icon || null,
-      color: badge.color || mapped?.color || null,
-      type: "badge",
-    };
-  }
+function toDisplayName(id) {
+  return id
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
-  const key = String(badge).toLowerCase().replace(/\s+/g, "_");
-  const mapped = dynamicBadgeMap[key] || BADGE_MAP[key];
+function parseBadge(id) {
+  const key = String(id).toLowerCase().replace(/\s+/g, "_");
+  const mapped = PLATFORM_BADGES[key];
+  const dynamic = dynamicBadgeMap[key];
 
-  if (mapped) {
+  return {
+    id: key,
+    name: mapped?.name || dynamic?.name || toDisplayName(key),
+    icon: mapped?.icon || dynamic?.icon || "🏅",
+    type: "platform",
+  };
+}
+
+function parseSelfBadge(id) {
+  const key = String(id).toLowerCase().replace(/\s+/g, "_");
+  const mapped = SELF_BADGES[key];
+  const dynamic = dynamicBadgeMap[key];
+
+  if (mapped?.emoji) {
     return {
       id: key,
       name: mapped.name,
-      icon: mapped.icon || "🏅",
-      lucide_icon: mapped.lucide_icon || null,
-      color: mapped.color || null,
-      type: "badge",
+      icon: mapped.emoji,
+      lucide: null,
+      type: "self",
+    };
+  }
+
+  if (mapped?.lucide) {
+    return {
+      id: key,
+      name: mapped.name,
+      icon: null,
+      lucide: mapped.lucide,
+      type: "self",
     };
   }
 
   return {
     id: key,
-    name: String(badge),
-    icon: "🏅",
-    lucide_icon: null,
-    color: null,
-    type: "badge",
-  };
-}
-
-function parseSelfBadge(badge) {
-  if (typeof badge === "object" && badge !== null) {
-    return {
-      id: (badge.id || badge.name || "unknown").toLowerCase().replace(/\s+/g, "_"),
-      name: badge.label || badge.name || badge.title || badge.text || "Unknown",
-      icon: badge.emoji || badge.icon || null,
-      color: badge.color || null,
-      type: "self",
-    };
-  }
-
-  const str = String(badge);
-  const emojiMatch = str.match(
-    /^([\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]|[\u{FE00}-\u{FEFF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{200D}\u{20E3}\u{FE0F}]|[\u{1F1E0}-\u{1F1FF}]{2}|.)\s*(.*)/u
-  );
-
-  if (emojiMatch && emojiMatch[2]) {
-    return {
-      id: emojiMatch[2].toLowerCase().replace(/\s+/g, "_"),
-      name: emojiMatch[2],
-      icon: emojiMatch[1],
-      color: null,
-      type: "self",
-    };
-  }
-
-  return {
-    id: str.toLowerCase().replace(/\s+/g, "_"),
-    name: str,
-    icon: null,
-    color: null,
+    name: dynamic?.name || toDisplayName(key),
+    icon: dynamic?.icon || null,
+    lucide: dynamic?.lucide_icon || null,
     type: "self",
   };
 }
