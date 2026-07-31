@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
 const SECTIONS = [
@@ -31,6 +31,7 @@ function DataList({ items }) {
 
 export default function Privacy() {
   const [active, setActive] = useState("overview");
+  const mainRef = useRef(null);
 
   useEffect(() => {
     function updateActive() {
