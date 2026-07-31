@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 
 const SECTIONS = [
@@ -19,7 +20,12 @@ function DataList({ items }) {
     <Card className="mb-4">
       <CardContent className="p-0">
         {items.map((item, i) => (
-          <div key={i} className={`flex items-start gap-3 px-4 py-3 text-sm text-muted-foreground ${i < items.length - 1 ? "border-b border-border" : ""}`}>
+          <div
+            key={i}
+            className={`flex items-start gap-3 px-4 py-3 text-sm text-muted-foreground ${
+              i < items.length - 1 ? "border-b border-border" : ""
+            }`}
+          >
             <span className="text-muted-foreground/40 mt-1.5 shrink-0">·</span>
             {item}
           </div>
@@ -32,6 +38,26 @@ function DataList({ items }) {
 export default function Privacy() {
   const [active, setActive] = useState("overview");
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActive(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: "-20% 0% -70% 0%" }
+    );
+
+    SECTIONS.forEach((s) => {
+      const el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="flex max-w-6xl mx-auto">
       <aside className="w-56 shrink-0 border-r border-border sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto py-8 px-4 max-lg:hidden">
@@ -41,19 +67,25 @@ export default function Privacy() {
             <a
               key={s.id}
               href={`#${s.id}`}
-              onClick={() => setActive(s.id)}
-              className={`block px-2 py-1 text-sm rounded-md transition-colors ${
-                active === s.id ? "text-foreground bg-muted" : "text-muted-foreground hover:text-foreground"
+              className={`relative block px-2 py-1 text-sm rounded-md transition-all duration-200 ${
+                active === s.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {s.label}
+              {active === s.id && (
+                <motion.div
+                  layoutId="privacy-active"
+                  className="absolute inset-0 bg-muted rounded-md"
+                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                />
+              )}
+              <span className="relative z-10">{s.label}</span>
             </a>
           ))}
         </nav>
       </aside>
 
       <main className="flex-1 max-w-3xl px-8 py-12 max-lg:px-6">
-        <h1 id="overview" className="text-3xl font-bold tracking-tight mb-2">Privacy Policy</h1>
+        <h1 id="overview" className="text-3xl font-bold tracking-tight mb-2 scroll-mt-20">Privacy Policy</h1>
         <p className="text-sm text-muted-foreground mb-12">Last updated — July 31, 2026</p>
 
         <p className="text-sm text-muted-foreground mb-8">
@@ -84,7 +116,7 @@ export default function Privacy() {
         <DataList
           items={[
             "To provide real-time presence through the REST API and WebSocket",
-            <>To support bot commands like <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono text-violet-400">/status</code> and <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono text-violet-400">/profile</code></>,
+            "To support bot commands like /status and /profile",
             "To store optional user-defined KV data",
           ]}
         />
