@@ -1,356 +1,946 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Beacon Demo</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beacon — Live Demo</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+
+    :root {
+      --bg: #09090b;
+      --bg-card: #0c0c0e;
+      --bg-muted: #131316;
+      --bg-input: #18181b;
+      --border: #27272a;
+      --border-hover: #3f3f46;
+      --text: #fafafa;
+      --text-muted: #a1a1aa;
+      --text-dim: #71717a;
+      --accent: #a78bfa;
+      --accent-dim: rgba(167, 139, 250, 0.1);
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      background: #0a0a0a;
-      color: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .card {
-      background: #111;
-      border: 1px solid #222;
-      border-radius: 16px;
-      padding: 32px;
-      width: 400px;
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-    .avatar {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      background: #222;
-      position: relative;
-      flex-shrink: 0;
-    }
-    .avatar img {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    .status-dot {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      border: 3px solid #111;
-      position: absolute;
-      bottom: 0;
-      right: 0;
-    }
-    .status-online { background: #23a559; }
-    .status-idle { background: #f0b232; }
-    .status-dnd { background: #f23f43; }
-    .status-offline { background: #80848e; }
-    .name { font-size: 20px; font-weight: 600; }
-    .username { color: #888; font-size: 14px; }
-    .section {
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid #222;
-    }
-    .section-title {
-      color: #888;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-    }
-    .field {
-      display: flex;
-      justify-content: space-between;
-      padding: 4px 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
       font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
-    .field-label { color: #888; }
-    .field-value { color: #fff; }
-    .spotify {
-      background: #1db954;
-      border-radius: 8px;
-      padding: 12px;
-      margin-top: 16px;
-      font-size: 13px;
+
+    .layout {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 48px 24px;
     }
-    .badge {
-      display: inline-block;
-      background: #222;
-      border: 1px solid #333;
-      border-radius: 4px;
-      padding: 2px 8px;
-      font-size: 12px;
-      margin: 2px;
-      color: #a78bfa;
+
+    header {
+      margin-bottom: 32px;
     }
-    .kv {
-      background: #0d0d0d;
-      border: 1px solid #222;
-      border-radius: 8px;
-      padding: 12px;
-      margin-top: 8px;
-      font-family: monospace;
-      font-size: 12px;
-      color: #4ade80;
-      white-space: pre;
-    }
-    .live {
+
+    header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      color: #888;
-      margin-top: 16px;
+      gap: 10px;
     }
-    .live-dot {
-      width: 6px;
-      height: 6px;
+
+    header h1 .dot {
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      background: #23a559;
+      background: var(--green);
       animation: pulse 2s infinite;
     }
+
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-    .powered {
-      text-align: center;
-      margin-top: 16px;
-      font-size: 11px;
-      color: #555;
-    }
-    .powered a { color: #a78bfa; text-decoration: none; }
-    .source-btn {
-      background: #111;
-      border: 1px solid #222;
-      color: #888;
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 12px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      transition: all 0.2s;
-    }
-    .source-btn:hover {
-      background: #1a1a1a;
-      color: #fff;
-      border-color: #333;
-    }
-    .source-panel {
-      display: none;
-      background: #0d0d0d;
-      border: 1px solid #222;
-      border-radius: 12px;
-      padding: 20px;
-      width: 600px;
-      max-height: 500px;
-      overflow: auto;
-    }
-    .source-panel pre {
-      font-family: monospace;
-      font-size: 11px;
-      color: #4ade80;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-    .source-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .source-title {
-      color: #fff;
-      font-size: 14px;
-      font-weight: 600;
-    }
-    .copy-btn {
-      background: #222;
-      border: 1px solid #333;
-      color: #a78bfa;
-      padding: 4px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 11px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
-    .copy-btn:hover { background: #333; }
-  </style>
-</head>
-<body>
-  <div class="card" id="card">
-    <div style="text-align:center;color:#888;padding:20px;">connecting to beacon...</div>
-  </div>
-
-  <button class="source-btn" onclick="toggleSource()">view source</button>
-
-  <div class="source-panel" id="source-panel">
-    <div class="source-header">
-      <span class="source-title">embed this on your website</span>
-      <button class="copy-btn" onclick="copySource()">copy</button>
-    </div>
-    <pre id="source-code"></pre>
-  </div>
-
-  <script>
-    const API = "https://api-beacon.up.railway.app";
-    const USER_ID = "usr_8f7220facabf757f";
-
-    const EMBED_SOURCE = `&lt;!-- Beacon Presence Widget --&gt;
-&lt;div id="beacon-presence"&gt;&lt;/div&gt;
-&lt;script&gt;
-  (async () =&gt; {
-    const res = await fetch("${API}/v1/users/${USER_ID}");
-    const { data } = await res.json();
-    const p = data.presence;
-    const colors = { online: "#23a559", idle: "#f0b232", dnd: "#f23f43", offline: "#80848e" };
-    document.getElementById("beacon-presence").innerHTML = \`
-      &lt;div style="background:#111;border:1px solid #222;border-radius:12px;padding:16px;width:300px;font-family:sans-serif;color:#fff;"&gt;
-        &lt;div style="display:flex;align-items:center;gap:12px;"&gt;
-          \${data.avatar_url ? \`&lt;img src="\${data.avatar_url}" style="width:48px;height:48px;border-radius:50%;" /&gt;\` : ""}
-          &lt;div&gt;
-            &lt;div style="font-weight:600;"&gt;\${data.display_name}&lt;/div&gt;
-            &lt;div style="color:#888;font-size:13px;"&gt;@\${data.username}&lt;/div&gt;
-          &lt;/div&gt;
-          &lt;div style="width:10px;height:10px;border-radius:50%;background:\${colors[p.status]};margin-left:auto;"&gt;&lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-    \`;
-  })();
-&lt;/script&gt;`;
-
-    function toggleSource() {
-      const panel = document.getElementById("source-panel");
-      panel.style.display = panel.style.display === "none" ? "block" : "none";
-      document.getElementById("source-code").innerHTML = EMBED_SOURCE;
-    }
-
-    function copySource() {
-      const text = EMBED_SOURCE.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
-      navigator.clipboard.writeText(text);
-      const btn = document.querySelector(".copy-btn");
-      btn.textContent = "copied";
-      setTimeout(() => btn.textContent = "copy", 2000);
-    }
-
-    async function fetchPresence() {
-      try {
-        const res = await fetch(`${API}/v1/users/${USER_ID}`);
-        const json = await res.json();
-
-        if (!json.success) {
-          document.getElementById("card").innerHTML = '<div style="text-align:center;color:#f87171;padding:20px;">user not found</div>';
-          return;
-        }
-
-        const d = json.data;
-        const p = d.presence;
-
-        let html = `
-          <div class="header">
-            <div class="avatar">
-              ${d.avatar_url ? `<img src="${d.avatar_url}" />` : ""}
-              <div class="status-dot status-${p.status}"></div>
-            </div>
-            <div>
-              <div class="name">${d.display_name}</div>
-              <div class="username">@${d.username}</div>
-            </div>
-          </div>
-          <div class="section">
-            <div class="section-title">presence</div>
-            <div class="field">
-              <span class="field-label">status</span>
-              <span class="field-value">${p.status}</span>
-            </div>
-            <div class="field">
-              <span class="field-label">mobile</span>
-              <span class="field-value">${p.is_mobile ? "yes" : "no"}</span>
-            </div>
-        `;
-
-        if (p.custom_status?.emoji || p.custom_status?.text) {
-          html += `
-            <div class="field">
-              <span class="field-label">custom</span>
-              <span class="field-value">${p.custom_status.emoji || ""} ${p.custom_status.text || ""}</span>
-            </div>
-          `;
-        }
-
-        if (p.activity) {
-          html += `
-            <div class="field">
-              <span class="field-label">activity</span>
-              <span class="field-value">${p.activity}</span>
-            </div>
-          `;
-        }
-
-        html += `</div>`;
-
-        if (d.bio) {
-          html += `
-            <div class="section">
-              <div class="section-title">about me</div>
-              <div style="font-size:14px;color:#ccc;">${d.bio}</div>
-            </div>
-          `;
-        }
-
-        if (d.spotify?.now_playing) {
-          html += `<div class="spotify">listening to: ${d.spotify.now_playing}</div>`;
-        }
-
-        if (d.badges?.length || d.self_badges?.length) {
-          const all = [...new Set([...(d.badges || []), ...(d.self_badges || [])])];
-          html += `
-            <div class="section">
-              <div class="section-title">badges</div>
-              ${all.map(b => `<span class="badge">${b}</span>`).join("")}
-            </div>
-          `;
-        }
-
-        if (d.kv && Object.keys(d.kv).length) {
-          html += `
-            <div class="section">
-              <div class="section-title">kv store</div>
-              <div class="kv">${JSON.stringify(d.kv, null, 2)}</div>
-            </div>
-          `;
-        }
-
-        html += `
-          <div class="live">
-            <div class="live-dot"></div>
-            live - updating every 10s
-          </div>
-          <div class="powered">
-            powered by <a href="${API}/docs" target="_blank">beacon</a>
-          </div>
-        `;
-
-        document.getElementById("card").innerHTML = html;
-      } catch (e) {
-        document.getElementById("card").innerHTML = `<div style="text-align:center;color:#f87171;padding:20px;">failed to connect to beacon</div>`;
+      0%,
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.4;
       }
     }
 
-    fetchPresence();
-    setInterval(fetchPresence, 10000);
+    header p {
+      color: var(--text-dim);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .search-bar input {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: "Inter", sans-serif;
+      font-size: 13px;
+      padding: 9px 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .search-bar input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .search-bar input:focus {
+      border-color: var(--border-hover);
+    }
+
+    .search-bar button {
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--radius);
+      font-family: "Inter", sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 9px 20px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+
+    .search-bar button:hover {
+      opacity: 0.9;
+    }
+
+    .search-bar button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 2px;
+      background: var(--bg-muted);
+      border-radius: var(--radius);
+      padding: 3px;
+      margin-bottom: 24px;
+      width: fit-content;
+    }
+
+    .tab {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-family: "Inter", sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tab:hover {
+      color: var(--text-muted);
+    }
+
+    .tab.active {
+      background: var(--bg-card);
+      color: var(--text);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+    }
+
+    .stat-card .label {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .stat-card .value {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      margin-top: 4px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-header h2 {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .card-header .badge {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-dim);
+      background: var(--bg-muted);
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+
+    .user-list {
+      list-style: none;
+    }
+
+    .user-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+      cursor: pointer;
+    }
+
+    .user-item:last-child {
+      border-bottom: none;
+    }
+
+    .user-item:hover {
+      background: var(--bg-muted);
+    }
+
+    .avatar-wrapper {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bg-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      overflow: hidden;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .status-indicator {
+      position: absolute;
+      bottom: -1px;
+      right: -1px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid var(--bg-card);
+    }
+
+    .status-indicator.online  { background: var(--green); }
+    .status-indicator.idle    { background: var(--yellow); }
+    .status-indicator.dnd     { background: var(--red); }
+    .status-indicator.offline { background: var(--text-dim); }
+
+    .user-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .user-info .name {
+      font-weight: 500;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .user-info .name .role-badge {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .user-info .meta {
+      font-size: 12px;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .mobile-icon {
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    .spotify-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(30, 215, 96, 0.1);
+      color: #1db954;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 999px;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .detail-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-top: 16px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .detail-panel.visible {
+      display: block;
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--bg-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-muted);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .detail-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .detail-title .name {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .detail-title .username {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+    }
+
+    .detail-cell {
+      background: var(--bg-card);
+      padding: 14px 20px;
+    }
+
+    .detail-cell .label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .detail-cell .value {
+      font-size: 13px;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .detail-cell .value.mono {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+    }
+
+    .json-panel {
+      margin-top: 16px;
+    }
+
+    .json-panel pre {
+      background: var(--bg-muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    .ws-log {
+      margin-top: 16px;
+    }
+
+    .ws-log .card-body {
+      padding: 16px 20px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .ws-event {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 4px 0;
+      font-size: 12px;
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .ws-event .time {
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    .ws-event .type {
+      color: var(--accent);
+      flex-shrink: 0;
+      font-weight: 500;
+    }
+
+    .ws-event .data {
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-dim);
+    }
+
+    .empty-state .icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+      opacity: 0.4;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+    }
+
+    .connection-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: var(--bg-muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-bottom: 24px;
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .connection-bar .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-dim);
+    }
+
+    .connection-bar .dot.connected {
+      background: var(--green);
+    }
+
+    .footer {
+      text-align: center;
+      padding: 48px 0 24px;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      color: var(--text);
+    }
+
+    @media (max-width: 640px) {
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .user-right {
+        display: none;
+      }
+
+      .tabs {
+        width: 100%;
+      }
+
+      .tab {
+        flex: 1;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <header>
+      <h1><span class="dot"></span> Beacon</h1>
+      <p>Real-time presence tracker for DisTalk</p>
+    </header>
+
+    <div class="connection-bar">
+      <span class="dot" id="wsIndicator"></span>
+      <span id="wsStatus">connecting...</span>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search by username or ID..." />
+      <button id="searchBtn" onclick="searchUser()">Look up</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="label">Total</div>
+        <div class="value" id="statTotal">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Online</div>
+        <div class="value" id="statOnline" style="color: var(--green)">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Idle</div>
+        <div class="value" id="statIdle" style="color: var(--yellow)">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">DND</div>
+        <div class="value" id="statDnd" style="color: var(--red)">—</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-filter="all">All</button>
+      <button class="tab" data-filter="online">Online</button>
+      <button class="tab" data-filter="idle">Idle</button>
+      <button class="tab" data-filter="dnd">DND</button>
+      <button class="tab" data-filter="offline">Offline</button>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Users</h2>
+        <span class="badge" id="userCount">0 users</span>
+      </div>
+      <ul class="user-list" id="userList">
+        <li class="empty-state">
+          <div class="icon">◇</div>
+          <p>Loading users...</p>
+        </li>
+      </ul>
+    </div>
+
+    <div class="detail-panel" id="detailPanel">
+      <div class="detail-header">
+        <div class="detail-avatar" id="detailAvatar">?</div>
+        <div class="detail-title">
+          <div class="name" id="detailName">—</div>
+          <div class="username" id="detailUsername">—</div>
+        </div>
+      </div>
+      <div class="detail-grid" id="detailGrid"></div>
+    </div>
+
+    <div class="json-panel" id="jsonPanel" style="display: none">
+      <div class="card">
+        <div class="card-header">
+          <h2>Raw JSON</h2>
+        </div>
+        <div style="padding: 16px 20px">
+          <pre id="jsonOutput"></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="ws-log card" style="margin-top: 16px">
+      <div class="card-header">
+        <h2>WebSocket Events</h2>
+        <span class="badge" id="eventCount">0 events</span>
+      </div>
+      <div class="card-body" id="wsEvents">
+        <div class="empty-state">
+          <p>Waiting for events...</p>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <a href="/docs">docs</a> · <a href="/privacy">privacy</a> · <a href="/">api</a>
+    </footer>
+  </div>
+
+  <script>
+    const API = window.location.origin;
+    const WS_URL = API.replace("http", "ws") + "/socket";
+
+    let allUsers = [];
+    let currentFilter = "all";
+    let ws = null;
+    let eventLog = [];
+    let heartbeatInterval = null;
+
+    document.querySelectorAll(".tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        currentFilter = tab.dataset.filter;
+        renderUsers();
+      });
+    });
+
+    document.getElementById("searchInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") searchUser();
+    });
+
+    async function fetchUsers() {
+      try {
+        const res = await fetch(`${API}/v1/users`);
+        const json = await res.json();
+        if (json.success) {
+          allUsers = json.data;
+          updateStats();
+          renderUsers();
+        }
+      } catch {}
+    }
+
+    function updateStats() {
+      const total = allUsers.length;
+      const online = allUsers.filter((u) => u.presence?.status === "online").length;
+      const idle = allUsers.filter((u) => u.presence?.status === "idle").length;
+      const dnd = allUsers.filter((u) => u.presence?.status === "dnd").length;
+
+      document.getElementById("statTotal").textContent = total;
+      document.getElementById("statOnline").textContent = online;
+      document.getElementById("statIdle").textContent = idle;
+      document.getElementById("statDnd").textContent = dnd;
+    }
+
+    function renderUsers() {
+      const list = document.getElementById("userList");
+      let filtered = allUsers;
+
+      const query = document.getElementById("searchInput").value.toLowerCase().trim();
+      if (query) {
+        filtered = filtered.filter(
+          (u) =>
+            u.username?.includes(query) ||
+            u.display_name?.toLowerCase().includes(query) ||
+            u.id?.includes(query)
+        );
+      }
+
+      if (currentFilter !== "all") {
+        filtered = filtered.filter((u) => u.presence?.status === currentFilter);
+      }
+
+      filtered.sort((a, b) => {
+        const order = { online: 0, idle: 1, dnd: 2, offline: 3 };
+        return (order[a.presence?.status] ?? 3) - (order[b.presence?.status] ?? 3);
+      });
+
+      document.getElementById("userCount").textContent = `${filtered.length} user${filtered.length !== 1 ? "s" : ""}`;
+
+      if (!filtered.length) {
+        list.innerHTML = `
+          <li class="empty-state">
+            <div class="icon">◇</div>
+            <p>No users found</p>
+          </li>`;
+        return;
+      }
+
+      list.innerHTML = filtered
+        .map((u) => {
+          const status = u.presence?.status || "offline";
+          const initial = (u.display_name || u.username || "?")[0].toUpperCase();
+          const avatarHtml = u.avatar_url
+            ? `<img src="${u.avatar_url}" alt="" />`
+            : initial;
+          const roleBadge =
+            u.platform_role && u.platform_role !== "user"
+              ? `<span class="role-badge">${u.platform_role}</span>`
+              : "";
+          const mobileIcon = u.presence?.is_mobile ? `<span class="mobile-icon">📱</span>` : "";
+          const spotifyHtml =
+            u.spotify?.now_playing
+              ? `<span class="spotify-pill">♫ ${u.spotify.now_playing}</span>`
+              : "";
+          const meta = u.presence?.custom_status?.text || u.bio || u.id;
+
+          return `
+            <li class="user-item" onclick="showDetail('${u.id}')">
+              <div class="avatar-wrapper">
+                <div class="avatar">${avatarHtml}</div>
+                <div class="status-indicator ${status}"></div>
+              </div>
+              <div class="user-info">
+                <div class="name">${u.display_name || u.username} ${roleBadge}</div>
+                <div class="meta">${meta}</div>
+              </div>
+              <div class="user-right">
+                ${mobileIcon}
+                ${spotifyHtml}
+              </div>
+            </li>`;
+        })
+        .join("");
+    }
+
+    function showDetail(id) {
+      const user = allUsers.find((u) => u.id === id);
+      if (!user) return;
+
+      const panel = document.getElementById("detailPanel");
+      panel.classList.add("visible");
+
+      const avatar = document.getElementById("detailAvatar");
+      const initial = (user.display_name || user.username || "?")[0].toUpperCase();
+      avatar.innerHTML = user.avatar_url
+        ? `<img src="${user.avatar_url}" alt="" />`
+        : initial;
+
+      document.getElementById("detailName").textContent = user.display_name || user.username;
+      document.getElementById("detailUsername").textContent = `@${user.username} · ${user.id}`;
+
+      const cells = [
+        ["Status", user.presence?.status || "offline"],
+        ["Role", user.platform_role || "user"],
+        ["Mobile", user.presence?.is_mobile ? "Yes" : "No"],
+        ["Spotify", user.spotify?.now_playing || (user.spotify?.connected ? "Connected" : "—")],
+        ["Bio", user.bio || "—"],
+        ["Custom Status", user.presence?.custom_status?.text || "—"],
+        ["Badges", [...(user.badges || []), ...(user.self_badges || [])].join(", ") || "—"],
+        ["API", `${API}/v1/users/${user.id}`],
+      ];
+
+      document.getElementById("detailGrid").innerHTML = cells
+        .map(
+          ([label, value]) => `
+          <div class="detail-cell">
+            <div class="label">${label}</div>
+            <div class="value${label === "API" ? " mono" : ""}">${value}</div>
+          </div>`
+        )
+        .join("");
+
+      const jsonPanel = document.getElementById("jsonPanel");
+      jsonPanel.style.display = "block";
+      document.getElementById("jsonOutput").textContent = JSON.stringify(user, null, 2);
+
+      panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    async function searchUser() {
+      const query = document.getElementById("searchInput").value.trim();
+      if (!query) return;
+
+      if (query.startsWith("usr_") || /^[a-f0-9]{16}$/.test(query)) {
+        try {
+          const res = await fetch(`${API}/v1/users/${query}`);
+          const json = await res.json();
+          if (json.success && json.data) {
+            const exists = allUsers.findIndex((u) => u.id === json.data.id);
+            if (exists >= 0) allUsers[exists] = json.data;
+            else allUsers.unshift(json.data);
+            renderUsers();
+            showDetail(json.data.id);
+            return;
+          }
+        } catch {}
+      }
+
+      renderUsers();
+    }
+
+    function connectWebSocket() {
+      ws = new WebSocket(WS_URL);
+
+      ws.onopen = () => {
+        document.getElementById("wsIndicator").classList.add("connected");
+        document.getElementById("wsStatus").textContent = "connected";
+        logWsEvent("CONNECTED", "websocket connected");
+      };
+
+      ws.onmessage = (e) => {
+        let msg;
+        try {
+          msg = JSON.parse(e.data);
+        } catch {
+          return;
+        }
+
+        if (msg.op === 1) {
+          const interval = msg.d?.heartbeat_interval || 30000;
+          clearInterval(heartbeatInterval);
+          heartbeatInterval = setInterval(() => {
+            if (ws?.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ op: 3 }));
+            }
+          }, interval);
+
+          const ids = allUsers.map((u) => u.id);
+          if (ids.length) {
+            ws.send(JSON.stringify({ op: 2, d: { subscribe_to_ids: ids } }));
+            logWsEvent("SUBSCRIBE", `subscribed to ${ids.length} users`);
+          }
+          return;
+        }
+
+        if (msg.t === "INIT_STATE") {
+          logWsEvent("INIT_STATE", msg.d?.display_name || msg.d?.id);
+          return;
+        }
+
+        if (msg.t === "PRESENCE_UPDATE") {
+          const updated = msg.d;
+          if (!updated?.id) return;
+
+          const idx = allUsers.findIndex((u) => u.id === updated.id);
+          if (idx >= 0) allUsers[idx] = { ...allUsers[idx], ...updated };
+          else allUsers.push(updated);
+
+          updateStats();
+          renderUsers();
+
+          const name = updated.display_name || updated.username || updated.id;
+          logWsEvent("PRESENCE_UPDATE", `${name} → ${updated.presence?.status}`);
+        }
+      };
+
+      ws.onclose = () => {
+        document.getElementById("wsIndicator").classList.remove("connected");
+        document.getElementById("wsStatus").textContent = "reconnecting...";
+        clearInterval(heartbeatInterval);
+        logWsEvent("DISCONNECTED", "reconnecting in 5s");
+        setTimeout(connectWebSocket, 5000);
+      };
+    }
+
+    function logWsEvent(type, data) {
+      const now = new Date().toLocaleTimeString("en-US", { hour12: false });
+      eventLog.unshift({ time: now, type, data });
+      if (eventLog.length > 50) eventLog.pop();
+
+      const container = document.getElementById("wsEvents");
+      document.getElementById("eventCount").textContent = `${eventLog.length} events`;
+
+      container.innerHTML = eventLog
+        .map(
+          (e) => `
+          <div class="ws-event">
+            <span class="time">${e.time}</span>
+            <span class="type">${e.type}</span>
+            <span class="data">${e.data}</span>
+          </div>`
+        )
+        .join("");
+    }
+
+    document.getElementById("searchInput").addEventListener("input", () => {
+      renderUsers();
+    });
+
+    fetchUsers();
+    setInterval(fetchUsers, 30000);
+    connectWebSocket();
   </script>
 </body>
 </html>
