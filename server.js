@@ -16,6 +16,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 app.use(api);
+
 setupGitHubWebhook(app);
 setupWebSocket(server);
 
@@ -26,7 +27,7 @@ async function poll() {
   const result = await fetchAllUsers();
   if (!result) return;
 
-  result.users.forEach(u => {
+  result.users.forEach((u) => {
     const old = store.get(u.id);
     store.set(u.id, u);
     if (old && old.presence?.status !== u.presence?.status) {
@@ -36,7 +37,9 @@ async function poll() {
 
   serverIds = result.serverIds;
   channelIds = result.channels;
-  console.log(`[Poll] ${result.users.length} users | ${serverIds.length} servers | ${channelIds.length} channels`);
+  console.log(
+    `[Poll] ${result.users.length} users | ${serverIds.length} servers | ${channelIds.length} channels`
+  );
 }
 
 server.listen(PORT, async () => {
@@ -44,8 +47,5 @@ server.listen(PORT, async () => {
   initPusher();
   await poll();
   setInterval(poll, 25000);
-
-  setTimeout(() => {
-    listenToAllChannels(channelIds, serverIds);
-  }, 5000);
+  setTimeout(() => listenToAllChannels(channelIds, serverIds), 5000);
 });

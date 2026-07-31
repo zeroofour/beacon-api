@@ -2,21 +2,23 @@ const BASE = "https://distalk.app";
 const COOKIE = process.env.SESSION_COOKIE || "";
 const DEVICE = process.env.DEVICE_ID || "";
 
+const HEADERS = {
+  "Content-Type": "application/json",
+  Cookie: COOKIE,
+  "User-Agent": "Mozilla/5.0",
+  Referer: "https://distalk.app/",
+};
+
 async function fetchAllUsers() {
   try {
     const res = await fetch(`${BASE}/index.php?api=state`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Cookie": COOKIE,
-        "User-Agent": "Mozilla/5.0",
-        "Referer": "https://distalk.app/"
-      },
+      headers: HEADERS,
       body: JSON.stringify({
         msgSince: new Date().toISOString(),
         need: "",
-        focus: { kind: "channel", serverId: "", channelId: "" }
-      })
+        focus: { kind: "channel", serverId: "", channelId: "" },
+      }),
     });
 
     if (!res.ok) return null;
@@ -30,10 +32,10 @@ async function fetchAllUsers() {
     const channels = [];
     const serverIds = [];
 
-    json.servers?.forEach(s => {
+    json.servers?.forEach((s) => {
       serverIds.push(s.id);
-      s.categories?.forEach(cat => {
-        cat.channels?.forEach(ch => {
+      s.categories?.forEach((cat) => {
+        cat.channels?.forEach((ch) => {
           channels.push(typeof ch === "string" ? ch : ch.id);
         });
       });
@@ -64,23 +66,23 @@ function clean(u) {
         emoji: u.status_emoji || null,
         text: u.status_text || null,
         style: u.status_style || "default",
-        color: u.status_color || null
+        color: u.status_color || null,
       },
-      activity: u.activity || null
+      activity: u.activity || null,
     },
     spotify: {
       connected: !!u.spotify_connected,
-      now_playing: u.spotify_now_playing || null
+      now_playing: u.spotify_now_playing || null,
     },
     socials: {
       youtube: u.social_youtube || null,
       twitch: u.social_twitch || null,
       spotify: u.social_spotify || null,
-      tiktok: u.social_tiktok || null
+      tiktok: u.social_tiktok || null,
     },
     badges: u.badges || [],
     self_badges: u.self_badges || [],
-    tag: u.tag || null
+    tag: u.tag || null,
   };
 }
 
@@ -88,23 +90,18 @@ async function fetchMessages(since) {
   try {
     const res = await fetch(`${BASE}/index.php?api=state`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Cookie": COOKIE,
-        "User-Agent": "Mozilla/5.0",
-        "Referer": "https://distalk.app/"
-      },
+      headers: HEADERS,
       body: JSON.stringify({
         msgSince: since,
         need: "messages",
-        focus: { kind: "channel", serverId: "", channelId: "" }
-      })
+        focus: { kind: "channel", serverId: "", channelId: "" },
+      }),
     });
 
     if (!res.ok) return null;
     const json = await res.json();
     return json.messages || [];
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -115,13 +112,14 @@ async function send(channelId, body, serverId) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Cookie": COOKIE,
-        "Origin": "https://distalk.app",
-        "Referer": "https://distalk.app/service-worker.js",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
-        "x-device-id": DEVICE
+        Cookie: COOKIE,
+        Origin: "https://distalk.app",
+        Referer: "https://distalk.app/service-worker.js",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+        "x-device-id": DEVICE,
       },
-      body: JSON.stringify({ serverId, channelId, body })
+      body: JSON.stringify({ serverId, channelId, body }),
     });
 
     const text = await res.text();
