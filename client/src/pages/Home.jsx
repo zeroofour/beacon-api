@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchUsers, fetchUser, connectWebSocket } from "../lib/api";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Search,
   User,
@@ -17,14 +16,14 @@ const STATUS_BG = {
   online: "bg-green-500",
   idle: "bg-yellow-500",
   dnd: "bg-red-500",
-  offline: "bg-zinc-600",
+  offline: "bg-[#333]",
 };
 
 const STATUS_TEXT = {
   online: "text-green-400",
   idle: "text-yellow-400",
   dnd: "text-red-400",
-  offline: "text-zinc-500",
+  offline: "text-[#555]",
 };
 
 const SORT_OPTIONS = [
@@ -34,7 +33,16 @@ const SORT_OPTIONS = [
 ];
 
 function Skeleton({ className = "" }) {
-  return <div className={`animate-pulse rounded-md bg-muted/40 ${className}`} />;
+  return <div className={`animate-pulse bg-[#181818] ${className}`} />;
+}
+
+function Field({ label, value }) {
+  return (
+    <div>
+      <p className="text-[11px] font-medium text-[#555] uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-[13px] text-[#aaa] leading-relaxed">{value}</p>
+    </div>
+  );
 }
 
 export default function Home() {
@@ -49,7 +57,6 @@ export default function Home() {
   const [showLog, setShowLog] = useState(false);
   const initialized = useRef(false);
   const sortRef = useRef(null);
-  const logEndRef = useRef(null);
 
   const addEvent = useCallback((type, data) => {
     const time = new Date().toLocaleTimeString("en-US", { hour12: false });
@@ -106,13 +113,11 @@ export default function Home() {
   }, [addEvent]);
 
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (sortRef.current && !sortRef.current.contains(e.target)) {
-        setSortOpen(false);
-      }
+    function onClick(e) {
+      if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false);
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
   const filtered = users
@@ -120,23 +125,13 @@ export default function Home() {
       if (filter !== "all" && u.presence?.status !== filter) return false;
       if (search) {
         const q = search.toLowerCase();
-        return (
-          u.username?.includes(q) ||
-          u.display_name?.toLowerCase().includes(q) ||
-          u.id?.includes(q)
-        );
+        return u.username?.includes(q) || u.display_name?.toLowerCase().includes(q) || u.id?.includes(q);
       }
       return true;
     })
     .sort((a, b) => {
-      if (sort === "name") {
-        return (a.display_name || a.username || "").localeCompare(
-          b.display_name || b.username || ""
-        );
-      }
-      if (sort === "role") {
-        return (a.platform_role || "").localeCompare(b.platform_role || "");
-      }
+      if (sort === "name") return (a.display_name || "").localeCompare(b.display_name || "");
+      if (sort === "role") return (a.platform_role || "").localeCompare(b.platform_role || "");
       const o = { online: 0, idle: 1, dnd: 2, offline: 3 };
       return (o[a.presence?.status] ?? 3) - (o[b.presence?.status] ?? 3);
     });
@@ -168,9 +163,7 @@ export default function Home() {
     }
   }
 
-  const allBadges = selected
-    ? [...(selected.badges || []), ...(selected.self_badges || [])]
-    : [];
+  const allBadges = selected ? [...(selected.badges || []), ...(selected.self_badges || [])] : [];
 
   const FILTERS = [
     { key: "all", label: "All", count: counts.total },
@@ -181,43 +174,39 @@ export default function Home() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto flex gap-0 min-h-[calc(100vh-3rem)]">
-      <div className="flex-1 max-w-4xl border-r border-border/30 px-6 py-6">
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 pointer-events-none" />
+    <div className="max-w-6xl mx-auto flex min-h-[calc(100vh-3.5rem)]">
+      <div className="flex-1 border-r border-[#181818] px-5 py-5">
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#444] pointer-events-none" />
           <input
             type="text"
             placeholder="Search users..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="w-full h-10 bg-transparent border border-border/40 rounded-xl pl-10 pr-4 text-[13px] text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-border/70 transition-colors duration-150"
+            className="w-full h-9 bg-[#111] border border-[#1e1e1e] rounded-md pl-9 pr-3 text-[13px] text-foreground placeholder:text-[#444] outline-none focus:border-[#333] transition-colors duration-100"
           />
         </div>
 
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-1">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-0.5">
             {FILTERS.map((f) => (
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
-                className={`relative flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg transition-colors duration-150 ${
-                  filter === f.key
-                    ? "text-foreground"
-                    : "text-muted-foreground/60 hover:text-muted-foreground"
+                className={`relative flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium rounded-md transition-colors duration-100 ${
+                  filter === f.key ? "text-foreground" : "text-[#555] hover:text-[#888]"
                 }`}
               >
                 {filter === f.key && (
                   <motion.div
                     layoutId="home-filter"
-                    className="absolute inset-0 bg-muted/50 rounded-lg border border-border/30"
+                    className="absolute inset-0 bg-[#161616] border border-[#1e1e1e] rounded-md"
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
                   />
                 )}
                 <span className="relative z-10">{f.label}</span>
-                <span className="relative z-10 text-[10px] tabular-nums opacity-60">
-                  {f.count}
-                </span>
+                <span className="relative z-10 text-[10px] tabular-nums opacity-50">{f.count}</span>
               </button>
             ))}
           </div>
@@ -225,31 +214,26 @@ export default function Home() {
           <div className="relative" ref={sortRef}>
             <button
               onClick={() => setSortOpen(!sortOpen)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-[12px] text-muted-foreground/60 hover:text-muted-foreground rounded-lg border border-border/30 transition-colors duration-150"
+              className="flex items-center gap-1 px-2 py-1 text-[11px] text-[#555] hover:text-[#888] rounded-md border border-[#1e1e1e] transition-colors duration-100"
             >
-              Sort: {SORT_OPTIONS.find((s) => s.value === sort)?.label}
-              <ChevronDown className={`h-3 w-3 transition-transform duration-150 ${sortOpen ? "rotate-180" : ""}`} />
+              {SORT_OPTIONS.find((s) => s.value === sort)?.label}
+              <ChevronDown className={`h-3 w-3 transition-transform duration-100 ${sortOpen ? "rotate-180" : ""}`} />
             </button>
             <AnimatePresence>
               {sortOpen && (
                 <motion.div
-                  initial={{ opacity: 0, y: -4, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -4, scale: 0.97 }}
-                  transition={{ duration: 0.1 }}
-                  className="absolute right-0 top-full mt-1 bg-card border border-border/40 rounded-lg shadow-lg overflow-hidden z-50 min-w-[120px]"
+                  initial={{ opacity: 0, y: -2 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -2 }}
+                  transition={{ duration: 0.08 }}
+                  className="absolute right-0 top-full mt-1 bg-[#141414] border border-[#1e1e1e] rounded-md shadow-xl shadow-black/30 overflow-hidden z-50 min-w-[100px]"
                 >
                   {SORT_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
-                      onClick={() => {
-                        setSort(opt.value);
-                        setSortOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 text-[12px] transition-colors duration-100 ${
-                        sort === opt.value
-                          ? "text-foreground bg-muted/40"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/20"
+                      onClick={() => { setSort(opt.value); setSortOpen(false); }}
+                      className={`w-full text-left px-3 py-1.5 text-[12px] transition-colors duration-75 ${
+                        sort === opt.value ? "text-foreground bg-[#1a1a1a]" : "text-[#666] hover:text-foreground hover:bg-[#181818]"
                       }`}
                     >
                       {opt.label}
@@ -261,99 +245,80 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-border/30 overflow-hidden">
+        <div className="border border-[#181818] rounded-md overflow-hidden">
           {loading ? (
             Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-border/20 last:border-0">
-                <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+              <div key={i} className="flex items-center gap-3 px-4 py-2.5 border-b border-[#141414] last:border-0">
+                <Skeleton className="h-7 w-7 rounded-full shrink-0" />
                 <div className="flex-1 space-y-1.5">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-2.5 w-40" />
+                  <Skeleton className="h-3 w-24 rounded-sm" />
+                  <Skeleton className="h-2 w-36 rounded-sm" />
                 </div>
               </div>
             ))
           ) : filtered.length === 0 ? (
-            <div className="text-center py-20 text-muted-foreground/40">
-              <User className="h-5 w-5 mx-auto mb-2 opacity-40" />
-              <p className="text-[12px]">No users found</p>
+            <div className="text-center py-16">
+              <User className="h-4 w-4 mx-auto mb-2 text-[#333]" />
+              <p className="text-[12px] text-[#444]">No users found</p>
             </div>
           ) : (
-            <div>
-              {filtered.map((u, i) => {
-                const status = u.presence?.status || "offline";
-                const initial = (u.display_name || u.username || "?")[0].toUpperCase();
-                const platformBadges = (u.badges || [])
-                  .filter((b) => typeof b === "object")
-                  .map((b) => b.name);
-                const isSelected = selected?.id === u.id;
+            filtered.map((u, i) => {
+              const status = u.presence?.status || "offline";
+              const initial = (u.display_name || u.username || "?")[0].toUpperCase();
+              const platformBadges = (u.badges || []).filter((b) => typeof b === "object").map((b) => b.name);
+              const isSelected = selected?.id === u.id;
 
-                return (
-                  <motion.div
-                    key={u.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: Math.min(i * 0.01, 0.2) }}
-                    onClick={() => setSelected(isSelected ? null : u)}
-                    className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors duration-100 border-b border-border/15 last:border-0 ${
-                      isSelected ? "bg-muted/40" : "hover:bg-muted/20"
-                    }`}
-                  >
-                    <div className="relative shrink-0">
-                      <div className="h-8 w-8 rounded-full bg-muted/40 flex items-center justify-center text-[11px] font-semibold text-muted-foreground overflow-hidden">
-                        {u.avatar_url ? (
-                          <img src={u.avatar_url} alt="" className="h-full w-full object-cover" />
-                        ) : (
-                          initial
-                        )}
-                      </div>
-                      <div className={`absolute -bottom-px -right-px h-2.5 w-2.5 rounded-full border-[1.5px] border-background ${STATUS_BG[status]}`} />
+              return (
+                <motion.div
+                  key={u.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: Math.min(i * 0.01, 0.15) }}
+                  onClick={() => setSelected(isSelected ? null : u)}
+                  className={`flex items-center gap-3 px-4 py-2 cursor-pointer transition-colors duration-75 border-b border-[#141414] last:border-0 ${
+                    isSelected ? "bg-[#141414]" : "hover:bg-[#0f0f0f]"
+                  }`}
+                >
+                  <div className="relative shrink-0">
+                    <div className="h-7 w-7 rounded-full bg-[#181818] flex items-center justify-center text-[10px] font-semibold text-[#666] overflow-hidden">
+                      {u.avatar_url ? <img src={u.avatar_url} alt="" className="h-full w-full object-cover" /> : initial}
                     </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[13px] font-medium truncate">
-                          {u.display_name || u.username}
+                    <div className={`absolute -bottom-px -right-px h-2 w-2 rounded-full border-[1.5px] border-background ${STATUS_BG[status]}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[13px] font-medium truncate">{u.display_name || u.username}</span>
+                      {platformBadges.map((name) => (
+                        <span key={name} className="text-[9px] font-semibold uppercase tracking-wider px-1 py-px rounded-sm bg-[#1a1a1a] text-[#555] shrink-0">
+                          {name}
                         </span>
-                        {platformBadges.map((name) => (
-                          <span
-                            key={name}
-                            className="text-[9px] font-semibold uppercase tracking-wider px-1 py-px rounded bg-muted/60 text-muted-foreground/60 shrink-0"
-                          >
-                            {name}
-                          </span>
-                        ))}
-                      </div>
-                      <p className="text-[11px] text-muted-foreground/50 truncate leading-tight">
-                        {u.presence?.custom_status?.text || u.bio || `@${u.username}`}
-                      </p>
+                      ))}
                     </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0 max-sm:hidden">
-                      {u.presence?.is_mobile && (
-                        <Smartphone className="h-3 w-3 text-muted-foreground/30" />
-                      )}
-                      {u.spotify?.now_playing && (
-                        <span className="flex items-center gap-1 text-[10px] text-green-500/70 bg-green-500/5 px-1.5 py-0.5 rounded-full max-w-[140px] truncate">
-                          <Music className="h-2.5 w-2.5 shrink-0" />
-                          {u.spotify.now_playing}
-                        </span>
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+                    <p className="text-[11px] text-[#444] truncate">{u.presence?.custom_status?.text || u.bio || `@${u.username}`}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0 max-sm:hidden">
+                    {u.presence?.is_mobile && <Smartphone className="h-3 w-3 text-[#333]" />}
+                    {u.spotify?.now_playing && (
+                      <span className="flex items-center gap-1 text-[10px] text-green-500/70 bg-green-500/5 px-1.5 py-0.5 rounded-sm max-w-[130px] truncate">
+                        <Music className="h-2.5 w-2.5 shrink-0" />
+                        {u.spotify.now_playing}
+                      </span>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })
           )}
         </div>
 
-        <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground/30 px-1">
-          <span>{filtered.length} user{filtered.length !== 1 ? "s" : ""}</span>
+        <div className="mt-2 flex items-center justify-between text-[11px] text-[#333] px-1">
+          <span className="tabular-nums">{filtered.length} user{filtered.length !== 1 ? "s" : ""}</span>
           <button
             onClick={() => setShowLog(!showLog)}
-            className="flex items-center gap-1 hover:text-muted-foreground/50 transition-colors duration-100"
+            className="flex items-center gap-1 hover:text-[#555] transition-colors duration-75"
           >
             <Terminal className="h-3 w-3" />
-            {showLog ? "Hide" : "Show"} log
+            {showLog ? "Hide" : "Log"}
           </button>
         </div>
 
@@ -363,34 +328,25 @@ export default function Home() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.15 }}
+              transition={{ duration: 0.1 }}
               className="overflow-hidden"
             >
-              <div className="mt-3 rounded-xl border border-border/30 overflow-hidden">
-                <div className="px-4 py-2 border-b border-border/20 flex items-center justify-between">
-                  <span className="text-[11px] font-medium text-muted-foreground/50">WebSocket Log</span>
-                  <span className="text-[10px] text-muted-foreground/30 tabular-nums">{events.length}</span>
+              <div className="mt-2 border border-[#181818] rounded-md overflow-hidden">
+                <div className="px-3 py-1.5 border-b border-[#141414] flex items-center justify-between">
+                  <span className="text-[11px] font-medium text-[#444]">WebSocket</span>
+                  <span className="text-[10px] text-[#333] tabular-nums">{events.length}</span>
                 </div>
-                <div className="max-h-[200px] overflow-y-auto p-3">
+                <div className="max-h-[180px] overflow-y-auto p-2">
                   {events.length === 0 ? (
-                    <p className="text-[11px] text-muted-foreground/30 text-center py-4">
-                      No events yet
-                    </p>
+                    <p className="text-[10px] text-[#333] text-center py-4">No events</p>
                   ) : (
-                    <div className="space-y-px">
-                      {events.map((e, i) => (
-                        <motion.div
-                          key={`${e.time}-${i}`}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="flex items-baseline gap-2 text-[10px] font-mono py-px"
-                        >
-                          <span className="text-muted-foreground/25 shrink-0">{e.time}</span>
-                          <span className="text-violet-400/50 shrink-0">{e.type}</span>
-                          <span className="text-muted-foreground/35 truncate">{e.data}</span>
-                        </motion.div>
-                      ))}
-                    </div>
+                    events.map((e, i) => (
+                      <div key={`${e.time}-${i}`} className="flex items-baseline gap-2 text-[10px] font-mono py-px">
+                        <span className="text-[#2a2a2a] shrink-0">{e.time}</span>
+                        <span className="text-orange-500/60 shrink-0">{e.type}</span>
+                        <span className="text-[#333] truncate">{e.data}</span>
+                      </div>
+                    ))
                   )}
                 </div>
               </div>
@@ -399,7 +355,7 @@ export default function Home() {
         </AnimatePresence>
       </div>
 
-      <div className="w-[380px] max-xl:hidden sticky top-12 h-[calc(100vh-3rem)] overflow-y-auto">
+      <div className="w-[360px] max-xl:hidden sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto">
         <AnimatePresence mode="wait">
           {selected ? (
             <motion.div
@@ -407,12 +363,12 @@ export default function Home() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.12 }}
+              transition={{ duration: 0.1 }}
               className="p-5"
             >
-              <div className="flex items-start justify-between mb-5">
+              <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-muted/40 flex items-center justify-center text-lg font-semibold text-muted-foreground overflow-hidden shrink-0">
+                  <div className="h-10 w-10 rounded-full bg-[#181818] flex items-center justify-center text-sm font-semibold text-[#555] overflow-hidden shrink-0">
                     {selected.avatar_url ? (
                       <img src={selected.avatar_url} alt="" className="h-full w-full object-cover" />
                     ) : (
@@ -420,59 +376,47 @@ export default function Home() {
                     )}
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-[14px] font-semibold">
-                        {selected.display_name || selected.username}
-                      </h3>
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="text-[14px] font-semibold">{selected.display_name || selected.username}</h3>
                       <span className={`text-[11px] font-medium capitalize ${STATUS_TEXT[selected.presence?.status] || ""}`}>
                         {selected.presence?.status || "offline"}
                       </span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground/50 font-mono">
-                      @{selected.username}
-                    </p>
+                    <p className="text-[11px] text-[#555] font-mono">@{selected.username}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setSelected(null)}
-                  className="p-1 rounded-md text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/30 transition-colors duration-100"
+                  className="p-1 rounded-md text-[#444] hover:text-[#888] hover:bg-[#161616] transition-colors duration-75"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="Role" value={selected.platform_role || "user"} />
                   <Field label="Mobile" value={selected.presence?.is_mobile ? "Yes" : "No"} />
                 </div>
 
                 {selected.bio && <Field label="Bio" value={selected.bio} />}
-
                 {selected.presence?.custom_status?.text && (
                   <Field label="Custom Status" value={selected.presence.custom_status.text} />
                 )}
 
                 {selected.spotify?.now_playing && (
-                  <div className="rounded-lg border border-green-500/10 bg-green-500/5 p-3">
-                    <p className="text-[10px] font-medium text-green-500/50 uppercase tracking-wider mb-1">
-                      Listening to
-                    </p>
+                  <div className="rounded-md border border-green-500/10 bg-green-500/5 p-3">
+                    <p className="text-[10px] font-medium text-green-500/50 uppercase tracking-wider mb-1">Listening to</p>
                     <p className="text-[12px] text-green-400/80">{selected.spotify.now_playing}</p>
                   </div>
                 )}
 
                 {allBadges.length > 0 && (
                   <div>
-                    <p className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider mb-2">
-                      Badges
-                    </p>
+                    <p className="text-[10px] font-medium text-[#444] uppercase tracking-wider mb-1.5">Badges</p>
                     <div className="flex flex-wrap gap-1">
                       {allBadges.map((b, i) => (
-                        <span
-                          key={i}
-                          className="text-[10px] bg-muted/30 border border-border/20 px-1.5 py-0.5 rounded-md text-muted-foreground/60"
-                        >
+                        <span key={i} className="text-[10px] bg-[#161616] border border-[#1e1e1e] px-1.5 py-0.5 rounded-sm text-[#666]">
                           {typeof b === "string" ? b : b.icon ? `${b.icon} ${b.name}` : b.name}
                         </span>
                       ))}
@@ -481,18 +425,16 @@ export default function Home() {
                 )}
 
                 <div>
-                  <p className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider mb-1.5">
-                    API
-                  </p>
-                  <div className="flex items-center gap-2 text-[11px] font-mono text-muted-foreground/40">
-                    <code className="truncate select-all flex-1">
+                  <p className="text-[10px] font-medium text-[#444] uppercase tracking-wider mb-1">API</p>
+                  <div className="flex items-center gap-1.5">
+                    <code className="text-[11px] font-mono text-[#555] truncate flex-1 select-all">
                       /v1/users/{selected.id}
                     </code>
                     <a
                       href={`${window.location.origin}/v1/users/${selected.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="shrink-0 p-1 rounded hover:bg-muted/30 transition-colors duration-100"
+                      className="p-1 rounded-sm text-[#444] hover:text-[#888] hover:bg-[#161616] transition-colors duration-75"
                     >
                       <ArrowUpRight className="h-3 w-3" />
                     </a>
@@ -500,20 +442,16 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <p className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider mb-1.5">
-                    ID
-                  </p>
-                  <code className="text-[11px] font-mono text-muted-foreground/40 select-all">
-                    {selected.id}
-                  </code>
+                  <p className="text-[10px] font-medium text-[#444] uppercase tracking-wider mb-1">ID</p>
+                  <code className="text-[11px] font-mono text-[#555] select-all">{selected.id}</code>
                 </div>
 
                 <details className="group">
-                  <summary className="text-[10px] font-medium text-muted-foreground/30 uppercase tracking-wider cursor-pointer hover:text-muted-foreground/50 transition-colors duration-100 list-none flex items-center gap-1">
-                    <ChevronDown className="h-3 w-3 transition-transform duration-150 group-open:rotate-180" />
+                  <summary className="text-[10px] font-medium text-[#333] uppercase tracking-wider cursor-pointer hover:text-[#555] transition-colors duration-75 list-none flex items-center gap-1">
+                    <ChevronDown className="h-3 w-3 transition-transform duration-100 group-open:rotate-180" />
                     Raw JSON
                   </summary>
-                  <pre className="mt-2 bg-muted/20 border border-border/20 rounded-lg p-3 text-[10px] font-mono text-muted-foreground/40 overflow-x-auto max-h-[300px] overflow-y-auto leading-relaxed">
+                  <pre className="mt-2 bg-[#0e0e0e] border border-[#181818] rounded-md p-3 text-[10px] font-mono text-[#444] overflow-x-auto max-h-[280px] overflow-y-auto leading-relaxed">
                     {JSON.stringify(selected, null, 2)}
                   </pre>
                 </details>
@@ -523,27 +461,16 @@ export default function Home() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex items-center justify-center h-full text-muted-foreground/20"
+              className="flex items-center justify-center h-full"
             >
               <div className="text-center">
-                <User className="h-5 w-5 mx-auto mb-2 opacity-40" />
-                <p className="text-[12px]">Select a user</p>
+                <User className="h-4 w-4 mx-auto mb-1.5 text-[#2a2a2a]" />
+                <p className="text-[12px] text-[#333]">Select a user</p>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
-    </div>
-  );
-}
-
-function Field({ label, value }) {
-  return (
-    <div>
-      <p className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider mb-1">
-        {label}
-      </p>
-      <p className="text-[12px] text-muted-foreground/70 leading-relaxed">{value}</p>
     </div>
   );
 }
