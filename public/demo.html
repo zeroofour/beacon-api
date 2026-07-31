@@ -763,7 +763,9 @@
             u.spotify?.now_playing
               ? `<span class="spotify-pill">♫ ${u.spotify.now_playing}</span>`
               : "";
-          const meta = u.presence?.custom_status?.text || u.bio || u.id;
+          const badgeCount = (u.badges?.length || 0) + (u.self_badges?.length || 0);
+          const badgeInfo = badgeCount ? ` · ${badgeCount} badge${badgeCount !== 1 ? "s" : ""}` : "";
+          const meta = (u.presence?.custom_status?.text || u.bio || u.id) + badgeInfo;
 
           return `
             <li class="user-item" onclick="showDetail('${u.id}')">
@@ -797,17 +799,35 @@
         ? `<img src="${user.avatar_url}" alt="" />`
         : initial;
 
-      document.getElementById("detailName").textContent = user.display_name || user.username;
-      document.getElementById("detailUsername").textContent = `@${user.username} · ${user.id}`;
+      document.getElementById("detailName").textContent =
+        user.display_name || user.username;
+      document.getElementById("detailUsername").textContent =
+        `@${user.username} · ${user.id}`;
+
+      const allBadges = [...(user.badges || []), ...(user.self_badges || [])];
+      const badgeText = allBadges.length
+        ? allBadges
+            .map((b) => {
+              if (typeof b === "string") return b;
+              if (b.icon) return `${b.icon} ${b.name}`;
+              if (b.lucide) return b.name;
+              return b.name || b.id || "?";
+            })
+            .join(", ")
+        : "—";
 
       const cells = [
         ["Status", user.presence?.status || "offline"],
         ["Role", user.platform_role || "user"],
         ["Mobile", user.presence?.is_mobile ? "Yes" : "No"],
-        ["Spotify", user.spotify?.now_playing || (user.spotify?.connected ? "Connected" : "—")],
+        [
+          "Spotify",
+          user.spotify?.now_playing ||
+            (user.spotify?.connected ? "Connected" : "—"),
+        ],
         ["Bio", user.bio || "—"],
         ["Custom Status", user.presence?.custom_status?.text || "—"],
-        ["Badges", [...(user.badges || []), ...(user.self_badges || [])].join(", ") || "—"],
+        ["Badges", badgeText],
         ["API", `${API}/v1/users/${user.id}`],
       ];
 
@@ -823,7 +843,11 @@
 
       const jsonPanel = document.getElementById("jsonPanel");
       jsonPanel.style.display = "block";
-      document.getElementById("jsonOutput").textContent = JSON.stringify(user, null, 2);
+      document.getElementById("jsonOutput").textContent = JSON.stringify(
+        user,
+        null,
+        2
+      );
 
       panel.scrollIntoView({ behavior: "smooth", block: "start" });
     }
