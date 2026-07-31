@@ -56,7 +56,6 @@ const SELF_BADGES = {
   collector: { name: "Collector", lucide: "archive" },
   hacker: { name: "Hacker", lucide: "terminal" },
   explorer: { name: "Explorer", lucide: "compass" },
-
   lang_en: { name: "Speaks English", emoji: "🇬🇧" },
   lang_de: { name: "Spricht Deutsch", emoji: "🇩🇪" },
   lang_es: { name: "Habla Español", emoji: "🇪🇸" },
@@ -96,9 +95,7 @@ function setBadgeDefinitions(badges) {
 }
 
 function toDisplayName(id) {
-  return id
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return id.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function parseBadge(id) {
@@ -273,10 +270,7 @@ async function send(channelId, body, serverId) {
 async function fetchBadgeDefinitions() {
   try {
     const res = await fetch(`${BASE}/index.php`, {
-      headers: {
-        Cookie: COOKIE,
-        "User-Agent": "Mozilla/5.0",
-      },
+      headers: { Cookie: COOKIE, "User-Agent": "Mozilla/5.0" },
     });
 
     const html = await res.text();
@@ -293,26 +287,18 @@ async function fetchBadgeDefinitions() {
 
       let icon = null;
       const emojiMatch = inner.match(/class="self-badge-emoji"[^>]*>([\s\S]*?)<\/span>/);
-      if (emojiMatch) {
-        icon = emojiMatch[1].trim();
-      }
+      if (emojiMatch) icon = emojiMatch[1].trim();
 
       let lucideIcon = null;
       const lucideMatch = inner.match(/data-lucide="([^"]*)"/);
-      if (lucideMatch) {
-        lucideIcon = lucideMatch[1];
-      }
+      if (lucideMatch) lucideIcon = lucideMatch[1];
 
       let color = null;
       const styleMatch = inner.match(/style="[^"]*color:\s*([^;"]*)/);
-      if (styleMatch) {
-        color = styleMatch[1].trim();
-      }
-
-      const id = name.toLowerCase().replace(/\s+/g, "_");
+      if (styleMatch) color = styleMatch[1].trim();
 
       badges.push({
-        id,
+        id: name.toLowerCase().replace(/\s+/g, "_"),
         name,
         title: title || name,
         icon,

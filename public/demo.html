@@ -3,98 +3,116 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Beacon — Live Demo</title>
+  <title>Beacon</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
-    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
-
     :root {
       --bg: #09090b;
-      --bg-card: #0c0c0e;
-      --bg-muted: #131316;
-      --bg-input: #18181b;
-      --border: #27272a;
-      --border-hover: #3f3f46;
-      --text: #fafafa;
-      --text-muted: #a1a1aa;
-      --text-dim: #71717a;
-      --accent: #a78bfa;
-      --accent-dim: rgba(167, 139, 250, 0.1);
-      --green: #22c55e;
-      --yellow: #eab308;
-      --red: #ef4444;
-      --blue: #3b82f6;
-      --radius: 8px;
-      --radius-lg: 12px;
+      --surface: #111113;
+      --subtle: #19191b;
+      --hover: #1e1e21;
+      --border: #222225;
+      --border-s: #2a2a2e;
+      --text: #ededef;
+      --text-2: #9394a1;
+      --text-3: #62636e;
+      --accent: #7c6ef6;
+      --accent-s: rgba(124,110,246,0.08);
+      --green: #3ecf71;
+      --yellow: #e5a913;
+      --red: #e5534b;
     }
 
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: "Inter", -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
       font-size: 14px;
       line-height: 1.5;
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
     }
 
-    .layout {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 48px 24px;
+    .layout { max-width: 960px; margin: 0 auto; padding: 48px 24px; }
+
+    .hero {
+      text-align: center;
+      padding: 64px 0 48px;
     }
 
-    header {
-      margin-bottom: 32px;
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-s);
+      border: 1px solid rgba(124,110,246,0.15);
+      border-radius: 999px;
+      padding: 4px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 20px;
     }
 
-    header h1 {
-      font-size: 24px;
-      font-weight: 600;
-      letter-spacing: -0.025em;
+    .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 12px;
+      background: linear-gradient(to bottom, var(--text), var(--text-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p { color: var(--text-2); font-size: 16px; max-width: 480px; margin: 0 auto 32px; }
+
+    .hero-links { display: flex; gap: 10px; justify-content: center; }
+
+    .hero-links a {
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+
+    .hero-links .primary { background: var(--text); color: var(--bg); }
+    .hero-links .primary:hover { opacity: 0.9; }
+    .hero-links .secondary { background: var(--surface); border: 1px solid var(--border); color: var(--text-2); }
+    .hero-links .secondary:hover { color: var(--text); border-color: var(--border-s); }
+
+    .conn-bar {
       display: flex;
       align-items: center;
-      gap: 10px;
-    }
-
-    header h1 .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--green);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-
-    header p {
-      color: var(--text-dim);
-      font-size: 13px;
-      margin-top: 4px;
-    }
-
-    .search-bar {
-      display: flex;
       gap: 8px;
+      padding: 8px 14px;
+      background: var(--subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--text-3);
       margin-bottom: 24px;
+      font-family: "JetBrains Mono", monospace;
     }
 
-    .search-bar input {
+    .conn-bar .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); }
+    .conn-bar .dot.on { background: var(--green); }
+
+    .search { display: flex; gap: 8px; margin-bottom: 24px; }
+
+    .search input {
       flex: 1;
-      background: var(--bg-input);
+      background: var(--subtle);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: 8px;
       color: var(--text);
       font-family: "Inter", sans-serif;
       font-size: 13px;
@@ -103,239 +121,151 @@
       transition: border-color 0.15s;
     }
 
-    .search-bar input::placeholder {
-      color: var(--text-dim);
-    }
+    .search input::placeholder { color: var(--text-3); }
+    .search input:focus { border-color: var(--border-s); }
 
-    .search-bar input:focus {
-      border-color: var(--border-hover);
-    }
-
-    .search-bar button {
+    .search button {
       background: var(--text);
       color: var(--bg);
       border: none;
-      border-radius: var(--radius);
+      border-radius: 8px;
       font-family: "Inter", sans-serif;
       font-size: 13px;
       font-weight: 500;
       padding: 9px 20px;
       cursor: pointer;
-      transition: opacity 0.15s;
-      white-space: nowrap;
     }
 
-    .search-bar button:hover {
-      opacity: 0.9;
+    .search button:hover { opacity: 0.9; }
+
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px; }
+
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
     }
 
-    .search-bar button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    .stat .label { font-size: 11px; color: var(--text-3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+    .stat .val { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; margin-top: 4px; }
 
-    .tabs {
-      display: flex;
-      gap: 2px;
-      background: var(--bg-muted);
-      border-radius: var(--radius);
-      padding: 3px;
-      margin-bottom: 24px;
-      width: fit-content;
-    }
+    .tabs { display: flex; gap: 2px; background: var(--subtle); border-radius: 8px; padding: 3px; margin-bottom: 24px; width: fit-content; }
 
     .tab {
       background: none;
       border: none;
-      color: var(--text-dim);
+      color: var(--text-3);
       font-family: "Inter", sans-serif;
       font-size: 13px;
       font-weight: 500;
       padding: 6px 16px;
       border-radius: 6px;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all 0.1s;
     }
 
-    .tab:hover {
-      color: var(--text-muted);
-    }
-
-    .tab.active {
-      background: var(--bg-card);
-      color: var(--text);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    }
-
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .stat-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 16px;
-    }
-
-    .stat-card .label {
-      font-size: 12px;
-      color: var(--text-dim);
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .stat-card .value {
-      font-size: 28px;
-      font-weight: 600;
-      letter-spacing: -0.025em;
-      margin-top: 4px;
-    }
+    .tab:hover { color: var(--text-2); }
+    .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
 
     .card {
-      background: var(--bg-card);
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
+      border-radius: 10px;
       overflow: hidden;
     }
 
-    .card-header {
-      padding: 16px 20px;
+    .card-h {
+      padding: 14px 18px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
-    .card-header h2 {
-      font-size: 14px;
-      font-weight: 600;
-    }
+    .card-h h2 { font-size: 14px; font-weight: 600; }
 
-    .card-header .badge {
+    .pill {
       font-size: 11px;
       font-weight: 500;
-      color: var(--text-dim);
-      background: var(--bg-muted);
+      color: var(--text-3);
+      background: var(--subtle);
       padding: 3px 8px;
       border-radius: 999px;
     }
 
-    .user-list {
-      list-style: none;
-    }
+    .user-list { list-style: none; }
 
     .user-item {
       display: flex;
       align-items: center;
       gap: 14px;
-      padding: 14px 20px;
+      padding: 12px 18px;
       border-bottom: 1px solid var(--border);
-      transition: background 0.1s;
       cursor: pointer;
+      transition: background 0.1s;
     }
 
-    .user-item:last-child {
-      border-bottom: none;
-    }
+    .user-item:last-child { border-bottom: none; }
+    .user-item:hover { background: var(--hover); }
+    .user-item.sel { background: var(--subtle); }
 
-    .user-item:hover {
-      background: var(--bg-muted);
-    }
+    .av-wrap { position: relative; flex-shrink: 0; }
 
-    .avatar-wrapper {
-      position: relative;
-      flex-shrink: 0;
-    }
-
-    .avatar {
+    .av {
       width: 36px;
       height: 36px;
       border-radius: 50%;
-      background: var(--bg-muted);
+      background: var(--subtle);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 14px;
       font-weight: 600;
-      color: var(--text-muted);
+      color: var(--text-2);
       overflow: hidden;
     }
 
-    .avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    .av img { width: 100%; height: 100%; object-fit: cover; }
 
-    .status-indicator {
+    .st-dot {
       position: absolute;
       bottom: -1px;
       right: -1px;
       width: 12px;
       height: 12px;
       border-radius: 50%;
-      border: 2px solid var(--bg-card);
+      border: 2px solid var(--surface);
     }
 
-    .status-indicator.online  { background: var(--green); }
-    .status-indicator.idle    { background: var(--yellow); }
-    .status-indicator.dnd     { background: var(--red); }
-    .status-indicator.offline { background: var(--text-dim); }
+    .st-dot.online { background: var(--green); }
+    .st-dot.idle { background: var(--yellow); }
+    .st-dot.dnd { background: var(--red); }
+    .st-dot.offline { background: var(--text-3); }
 
-    .user-info {
-      flex: 1;
-      min-width: 0;
-    }
+    .u-info { flex: 1; min-width: 0; }
+    .u-info .name { font-weight: 500; font-size: 13px; display: flex; align-items: center; gap: 6px; }
 
-    .user-info .name {
-      font-weight: 500;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .user-info .name .role-badge {
+    .role-pill {
       font-size: 10px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.04em;
-      padding: 1px 5px;
+      padding: 1px 6px;
       border-radius: 4px;
-      background: var(--accent-dim);
+      background: var(--accent-s);
       color: var(--accent);
     }
 
-    .user-info .meta {
-      font-size: 12px;
-      color: var(--text-dim);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+    .u-info .meta { font-size: 12px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    .user-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
-    }
+    .u-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
-    .mobile-icon {
-      color: var(--text-dim);
-      font-size: 14px;
-    }
-
-    .spotify-pill {
+    .sp-pill {
       display: flex;
       align-items: center;
       gap: 5px;
-      background: rgba(30, 215, 96, 0.1);
+      background: rgba(30,215,96,0.08);
       color: #1db954;
       font-size: 11px;
       font-weight: 500;
@@ -347,353 +277,160 @@
       white-space: nowrap;
     }
 
-    .detail-panel {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      margin-top: 16px;
-      overflow: hidden;
-      display: none;
-    }
+    .detail { margin-top: 16px; display: none; }
+    .detail.vis { display: block; }
 
-    .detail-panel.visible {
-      display: block;
-    }
-
-    .detail-header {
+    .detail-head {
       display: flex;
       align-items: center;
       gap: 16px;
-      padding: 24px 20px;
+      padding: 20px 18px;
       border-bottom: 1px solid var(--border);
     }
 
-    .detail-avatar {
+    .detail-av {
       width: 56px;
       height: 56px;
       border-radius: 50%;
-      background: var(--bg-muted);
+      background: var(--subtle);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 22px;
       font-weight: 600;
-      color: var(--text-muted);
+      color: var(--text-2);
       overflow: hidden;
       flex-shrink: 0;
     }
 
-    .detail-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    .detail-av img { width: 100%; height: 100%; object-fit: cover; }
+    .detail-name { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+    .detail-user { font-size: 12px; color: var(--text-3); font-family: "JetBrains Mono", monospace; }
 
-    .detail-title .name {
-      font-size: 18px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-    }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; }
+    .detail-grid > div { padding: 14px 18px; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
+    .detail-grid > div:nth-child(2n) { border-right: none; }
+    .detail-grid > div.full { grid-column: 1 / -1; border-right: none; }
+    .detail-grid .lbl { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .detail-grid .val { font-size: 13px; word-break: break-word; }
+    .detail-grid .val.mono { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--accent); }
 
-    .detail-title .username {
-      font-size: 13px;
-      color: var(--text-dim);
-    }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1px;
-      background: var(--border);
-    }
-
-    .detail-cell {
-      background: var(--bg-card);
-      padding: 14px 20px;
-    }
-
-    .detail-cell .label {
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 4px;
-    }
-
-    .detail-cell .value {
-      font-size: 13px;
-      color: var(--text);
-      word-break: break-word;
-    }
-
-    .detail-cell .value.mono {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 12px;
-    }
-
-    .badge-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
+    .badge-list { display: flex; flex-wrap: wrap; gap: 6px; }
 
     .badge-item {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      background: var(--bg-input);
+      background: var(--subtle);
       border: 1px solid var(--border);
       border-radius: 6px;
       padding: 4px 10px;
       font-size: 12px;
-      color: var(--text);
     }
 
-    .badge-item svg {
-      width: 14px;
-      height: 14px;
-      stroke: var(--accent);
-      flex-shrink: 0;
-    }
+    .badge-item svg { width: 14px; height: 14px; stroke: var(--accent); flex-shrink: 0; }
+    .badge-item .emoji { font-size: 14px; line-height: 1; }
+    .badge-item.plat { border-color: var(--border-s); background: var(--hover); }
 
-    .badge-item .badge-emoji {
-      font-size: 14px;
-      line-height: 1;
-    }
-
-    .badge-item.platform {
-      border-color: var(--border-hover);
-      background: var(--bg-muted);
-    }
-
-    .badge-item.platform .badge-emoji {
-      font-size: 13px;
-    }
-
-    .json-panel {
-      margin-top: 16px;
-    }
-
-    .json-panel pre {
-      background: var(--bg-muted);
+    .json-card { margin-top: 16px; display: none; }
+    .json-card.vis { display: block; }
+    .json-card pre {
+      background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 16px 20px;
+      border-radius: 8px;
+      padding: 16px;
       font-family: "JetBrains Mono", monospace;
       font-size: 12px;
-      color: var(--text-muted);
+      color: var(--text-2);
       overflow-x: auto;
       line-height: 1.6;
+      margin: 16px 18px 18px;
     }
 
-    .ws-log {
-      margin-top: 16px;
-    }
+    .ws-card { margin-top: 16px; }
+    .ws-body { padding: 14px 18px; max-height: 280px; overflow-y: auto; }
 
-    .ws-log .card-body {
-      padding: 16px 20px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
+    .ws-ev { display: flex; align-items: baseline; gap: 10px; padding: 3px 0; font-size: 12px; font-family: "JetBrains Mono", monospace; }
+    .ws-ev .t { color: var(--text-3); flex-shrink: 0; }
+    .ws-ev .tp { color: var(--accent); flex-shrink: 0; font-weight: 500; }
+    .ws-ev .d { color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    .ws-event {
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
-      padding: 4px 0;
-      font-size: 12px;
-      font-family: "JetBrains Mono", monospace;
-    }
+    .empty { text-align: center; padding: 40px 20px; color: var(--text-3); }
+    .empty p { font-size: 13px; }
 
-    .ws-event .time {
-      color: var(--text-dim);
-      flex-shrink: 0;
-    }
-
-    .ws-event .type {
-      color: var(--accent);
-      flex-shrink: 0;
-      font-weight: 500;
-    }
-
-    .ws-event .data {
-      color: var(--text-muted);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 48px 20px;
-      color: var(--text-dim);
-    }
-
-    .empty-state .icon {
-      font-size: 32px;
-      margin-bottom: 12px;
-      opacity: 0.4;
-    }
-
-    .empty-state p {
-      font-size: 13px;
-    }
-
-    .connection-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      background: var(--bg-muted);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 12px;
-      color: var(--text-dim);
-      margin-bottom: 24px;
-      font-family: "JetBrains Mono", monospace;
-    }
-
-    .connection-bar .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--text-dim);
-    }
-
-    .connection-bar .dot.connected {
-      background: var(--green);
-    }
-
-    .footer {
-      text-align: center;
-      padding: 48px 0 24px;
-      font-size: 12px;
-      color: var(--text-dim);
-    }
-
-    .footer a {
-      color: var(--text-muted);
-      text-decoration: none;
-    }
-
-    .footer a:hover {
-      color: var(--text);
-    }
+    .footer { text-align: center; padding: 48px 0 24px; font-size: 12px; color: var(--text-3); }
+    .footer a { color: var(--text-2); text-decoration: none; }
+    .footer a:hover { color: var(--text); }
 
     @media (max-width: 640px) {
-      .stats-row {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .detail-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .user-right {
-        display: none;
-      }
-
-      .tabs {
-        width: 100%;
-      }
-
-      .tab {
-        flex: 1;
-        text-align: center;
-      }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .detail-grid { grid-template-columns: 1fr; }
+      .detail-grid > div { border-right: none; }
+      .u-right { display: none; }
+      .hero h1 { font-size: 32px; }
+      .tabs { width: 100%; }
+      .tab { flex: 1; text-align: center; }
     }
   </style>
 </head>
 <body>
   <div class="layout">
-    <header>
-      <h1><span class="dot"></span> Beacon</h1>
-      <p>Real-time presence tracker for DisTalk</p>
-    </header>
-
-    <div class="connection-bar">
-      <span class="dot" id="wsIndicator"></span>
-      <span id="wsStatus">connecting...</span>
+    <div class="hero">
+      <div class="hero-badge"><span class="dot"></span> Live</div>
+      <h1>Beacon</h1>
+      <p>Real-time presence API for DisTalk. Track status, activity, and Spotify data through REST or WebSocket.</p>
+      <div class="hero-links">
+        <a href="/docs" class="primary">Documentation</a>
+        <a href="/" class="secondary">API Reference</a>
+      </div>
     </div>
 
-    <div class="search-bar">
-      <input type="text" id="searchInput" placeholder="Search by username or ID..." />
-      <button id="searchBtn" onclick="searchUser()">Look up</button>
+    <div class="conn-bar">
+      <span class="dot" id="wsI"></span>
+      <span id="wsS">connecting...</span>
     </div>
 
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="label">Total</div>
-        <div class="value" id="statTotal">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Online</div>
-        <div class="value" id="statOnline" style="color: var(--green)">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Idle</div>
-        <div class="value" id="statIdle" style="color: var(--yellow)">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">DND</div>
-        <div class="value" id="statDnd" style="color: var(--red)">—</div>
-      </div>
+    <div class="search">
+      <input type="text" id="q" placeholder="Search by username or ID..." />
+      <button onclick="doSearch()">Look up</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="label">Total</div><div class="val" id="sT">—</div></div>
+      <div class="stat"><div class="label">Online</div><div class="val" id="sO" style="color:var(--green)">—</div></div>
+      <div class="stat"><div class="label">Idle</div><div class="val" id="sI" style="color:var(--yellow)">—</div></div>
+      <div class="stat"><div class="label">DND</div><div class="val" id="sD" style="color:var(--red)">—</div></div>
     </div>
 
     <div class="tabs">
-      <button class="tab active" data-filter="all">All</button>
-      <button class="tab" data-filter="online">Online</button>
-      <button class="tab" data-filter="idle">Idle</button>
-      <button class="tab" data-filter="dnd">DND</button>
-      <button class="tab" data-filter="offline">Offline</button>
+      <button class="tab active" data-f="all">All</button>
+      <button class="tab" data-f="online">Online</button>
+      <button class="tab" data-f="idle">Idle</button>
+      <button class="tab" data-f="dnd">DND</button>
+      <button class="tab" data-f="offline">Offline</button>
     </div>
 
     <div class="card">
-      <div class="card-header">
-        <h2>Users</h2>
-        <span class="badge" id="userCount">0 users</span>
-      </div>
-      <ul class="user-list" id="userList">
-        <li class="empty-state">
-          <div class="icon">◇</div>
-          <p>Loading users...</p>
-        </li>
-      </ul>
+      <div class="card-h"><h2>Users</h2><span class="pill" id="uC">0</span></div>
+      <ul class="user-list" id="uL"><li class="empty"><p>Loading...</p></li></ul>
     </div>
 
-    <div class="detail-panel" id="detailPanel">
-      <div class="detail-header">
-        <div class="detail-avatar" id="detailAvatar">?</div>
-        <div class="detail-title">
-          <div class="name" id="detailName">—</div>
-          <div class="username" id="detailUsername">—</div>
-        </div>
+    <div class="detail card" id="dP">
+      <div class="detail-head">
+        <div class="detail-av" id="dA">?</div>
+        <div><div class="detail-name" id="dN">—</div><div class="detail-user" id="dU">—</div></div>
       </div>
-      <div class="detail-grid" id="detailGrid"></div>
+      <div class="detail-grid" id="dG"></div>
     </div>
 
-    <div class="json-panel" id="jsonPanel" style="display: none">
-      <div class="card">
-        <div class="card-header">
-          <h2>Raw JSON</h2>
-        </div>
-        <div style="padding: 16px 20px">
-          <pre id="jsonOutput"></pre>
-        </div>
-      </div>
+    <div class="json-card card" id="jP">
+      <div class="card-h"><h2>Raw JSON</h2></div>
+      <pre id="jO"></pre>
     </div>
 
-    <div class="ws-log card" style="margin-top: 16px">
-      <div class="card-header">
-        <h2>WebSocket Events</h2>
-        <span class="badge" id="eventCount">0 events</span>
-      </div>
-      <div class="card-body" id="wsEvents">
-        <div class="empty-state">
-          <p>Waiting for events...</p>
-        </div>
-      </div>
+    <div class="ws-card card">
+      <div class="card-h"><h2>WebSocket</h2><span class="pill" id="eC">0</span></div>
+      <div class="ws-body" id="wE"><div class="empty"><p>Waiting...</p></div></div>
     </div>
 
     <footer class="footer">
@@ -702,340 +439,176 @@
   </div>
 
   <script>
-    const API = window.location.origin;
-    const WS_URL = API.replace("http", "ws") + "/socket";
+    const API = location.origin;
+    const WSU = API.replace("http", "ws") + "/socket";
+    let users = [], filter = "all", ws = null, evts = [], hb = null;
 
-    let allUsers = [];
-    let currentFilter = "all";
-    let ws = null;
-    let eventLog = [];
-    let heartbeatInterval = null;
-
-    document.querySelectorAll(".tab").forEach((tab) => {
-      tab.addEventListener("click", () => {
-        document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
-        tab.classList.add("active");
-        currentFilter = tab.dataset.filter;
-        renderUsers();
+    document.querySelectorAll(".tab").forEach(t => {
+      t.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+        t.classList.add("active");
+        filter = t.dataset.f;
+        render();
       });
     });
 
-    document.getElementById("searchInput").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") searchUser();
-    });
+    document.getElementById("q").addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
+    document.getElementById("q").addEventListener("input", render);
 
-    document.getElementById("searchInput").addEventListener("input", () => {
-      renderUsers();
-    });
-
-    async function fetchUsers() {
+    async function load() {
       try {
-        const res = await fetch(`${API}/v1/users`);
-        const json = await res.json();
-        if (json.success) {
-          allUsers = json.data;
-          updateStats();
-          renderUsers();
-        }
+        const r = await fetch(API + "/v1/users");
+        const j = await r.json();
+        if (j.success) { users = j.data; stats(); render(); }
       } catch {}
     }
 
-    function updateStats() {
-      const total = allUsers.length;
-      const online = allUsers.filter((u) => u.presence?.status === "online").length;
-      const idle = allUsers.filter((u) => u.presence?.status === "idle").length;
-      const dnd = allUsers.filter((u) => u.presence?.status === "dnd").length;
-
-      document.getElementById("statTotal").textContent = total;
-      document.getElementById("statOnline").textContent = online;
-      document.getElementById("statIdle").textContent = idle;
-      document.getElementById("statDnd").textContent = dnd;
+    function stats() {
+      document.getElementById("sT").textContent = users.length;
+      document.getElementById("sO").textContent = users.filter(u => u.presence?.status === "online").length;
+      document.getElementById("sI").textContent = users.filter(u => u.presence?.status === "idle").length;
+      document.getElementById("sD").textContent = users.filter(u => u.presence?.status === "dnd").length;
     }
 
-    function renderBadgeIcon(b) {
-      if (typeof b === "string") return `<span class="badge-item">${b}</span>`;
-
-      const typeClass = b.type === "platform" ? " platform" : "";
-
-      if (b.icon) {
-        return `<span class="badge-item${typeClass}"><span class="badge-emoji">${b.icon}</span>${b.name}</span>`;
-      }
-
-      if (b.lucide) {
-        return `<span class="badge-item${typeClass}"><i data-lucide="${b.lucide}"></i>${b.name}</span>`;
-      }
-
-      return `<span class="badge-item${typeClass}">${b.name}</span>`;
+    function badgeHtml(b) {
+      const cls = b.type === "platform" ? " plat" : "";
+      if (b.icon) return `<span class="badge-item${cls}"><span class="emoji">${b.icon}</span>${b.name}</span>`;
+      if (b.lucide) return `<span class="badge-item${cls}"><i data-lucide="${b.lucide}"></i>${b.name}</span>`;
+      return `<span class="badge-item${cls}">${b.name}</span>`;
     }
 
-    function renderUsers() {
-      const list = document.getElementById("userList");
-      let filtered = allUsers;
-
-      const query = document.getElementById("searchInput").value.toLowerCase().trim();
-      if (query) {
-        filtered = filtered.filter(
-          (u) =>
-            u.username?.includes(query) ||
-            u.display_name?.toLowerCase().includes(query) ||
-            u.id?.includes(query)
-        );
-      }
-
-      if (currentFilter !== "all") {
-        filtered = filtered.filter((u) => u.presence?.status === currentFilter);
-      }
-
-      filtered.sort((a, b) => {
-        const order = { online: 0, idle: 1, dnd: 2, offline: 3 };
-        return (order[a.presence?.status] ?? 3) - (order[b.presence?.status] ?? 3);
+    function render() {
+      const list = document.getElementById("uL");
+      const q = document.getElementById("q").value.toLowerCase().trim();
+      let f = users.filter(u => {
+        if (filter !== "all" && u.presence?.status !== filter) return false;
+        if (q) return u.username?.includes(q) || u.display_name?.toLowerCase().includes(q) || u.id?.includes(q);
+        return true;
+      }).sort((a, b) => {
+        const o = { online: 0, idle: 1, dnd: 2, offline: 3 };
+        return (o[a.presence?.status] ?? 3) - (o[b.presence?.status] ?? 3);
       });
 
-      document.getElementById("userCount").textContent =
-        `${filtered.length} user${filtered.length !== 1 ? "s" : ""}`;
+      document.getElementById("uC").textContent = f.length + " user" + (f.length !== 1 ? "s" : "");
 
-      if (!filtered.length) {
-        list.innerHTML = `
-          <li class="empty-state">
-            <div class="icon">◇</div>
-            <p>No users found</p>
-          </li>`;
-        return;
-      }
+      if (!f.length) { list.innerHTML = '<li class="empty"><p>No users found</p></li>'; return; }
 
-      list.innerHTML = filtered
-        .map((u) => {
-          const status = u.presence?.status || "offline";
-          const initial = (u.display_name || u.username || "?")[0].toUpperCase();
-          const avatarHtml = u.avatar_url
-            ? `<img src="${u.avatar_url}" alt="" />`
-            : initial;
-          const roleBadge =
-            u.badges?.length
-              ? u.badges.map((b) => `<span class="role-badge">${b.name}</span>`).join("")
-              : u.platform_role && u.platform_role !== "user"
-                ? `<span class="role-badge">${u.platform_role}</span>`
-                : "";
-          const mobileIcon = u.presence?.is_mobile
-            ? `<span class="mobile-icon">📱</span>`
-            : "";
-          const spotifyHtml = u.spotify?.now_playing
-            ? `<span class="spotify-pill">♫ ${u.spotify.now_playing}</span>`
-            : "";
-          const badgeCount =
-            (u.badges?.length || 0) + (u.self_badges?.length || 0);
-          const badgeInfo = badgeCount
-            ? ` · ${badgeCount} badge${badgeCount !== 1 ? "s" : ""}`
-            : "";
-          const meta =
-            (u.presence?.custom_status?.text || u.bio || u.id) + badgeInfo;
-
-          return `
-            <li class="user-item" onclick="showDetail('${u.id}')">
-              <div class="avatar-wrapper">
-                <div class="avatar">${avatarHtml}</div>
-                <div class="status-indicator ${status}"></div>
-              </div>
-              <div class="user-info">
-                <div class="name">${u.display_name || u.username} ${roleBadge}</div>
-                <div class="meta">${meta}</div>
-              </div>
-              <div class="user-right">
-                ${mobileIcon}
-                ${spotifyHtml}
-              </div>
-            </li>`;
-        })
-        .join("");
+      list.innerHTML = f.map(u => {
+        const s = u.presence?.status || "offline";
+        const i = (u.display_name || u.username || "?")[0].toUpperCase();
+        const av = u.avatar_url ? `<img src="${u.avatar_url}" alt="" />` : i;
+        const badges = u.badges?.length ? u.badges.map(b => `<span class="role-pill">${b.name}</span>`).join("") : u.platform_role && u.platform_role !== "user" ? `<span class="role-pill">${u.platform_role}</span>` : "";
+        const mob = u.presence?.is_mobile ? '<span style="color:var(--text-3);font-size:14px">📱</span>' : "";
+        const sp = u.spotify?.now_playing ? `<span class="sp-pill">♫ ${u.spotify.now_playing}</span>` : "";
+        const bc = (u.badges?.length || 0) + (u.self_badges?.length || 0);
+        const meta = (u.presence?.custom_status?.text || u.bio || u.id) + (bc ? ` · ${bc} badge${bc !== 1 ? "s" : ""}` : "");
+        return `<li class="user-item" onclick="detail('${u.id}')">
+          <div class="av-wrap"><div class="av">${av}</div><div class="st-dot ${s}"></div></div>
+          <div class="u-info"><div class="name">${u.display_name || u.username} ${badges}</div><div class="meta">${meta}</div></div>
+          <div class="u-right">${mob}${sp}</div></li>`;
+      }).join("");
     }
 
-    function showDetail(id) {
-      const user = allUsers.find((u) => u.id === id);
-      if (!user) return;
+    function detail(id) {
+      const u = users.find(x => x.id === id);
+      if (!u) return;
+      const p = document.getElementById("dP");
+      p.classList.add("vis");
+      const i = (u.display_name || u.username || "?")[0].toUpperCase();
+      document.getElementById("dA").innerHTML = u.avatar_url ? `<img src="${u.avatar_url}" alt="" />` : i;
+      document.getElementById("dN").textContent = u.display_name || u.username;
+      document.getElementById("dU").textContent = `@${u.username} · ${u.id}`;
 
-      const panel = document.getElementById("detailPanel");
-      panel.classList.add("visible");
-
-      const avatar = document.getElementById("detailAvatar");
-      const initial = (user.display_name || user.username || "?")[0].toUpperCase();
-      avatar.innerHTML = user.avatar_url
-        ? `<img src="${user.avatar_url}" alt="" />`
-        : initial;
-
-      document.getElementById("detailName").textContent =
-        user.display_name || user.username;
-      document.getElementById("detailUsername").textContent =
-        `@${user.username} · ${user.id}`;
-
-      const allBadges = [...(user.badges || []), ...(user.self_badges || [])];
-
-      let badgeHtml = '<span style="color: var(--text-dim);">—</span>';
-      if (allBadges.length) {
-        badgeHtml =
-          '<div class="badge-list">' +
-          allBadges.map(renderBadgeIcon).join("") +
-          "</div>";
-      }
+      const all = [...(u.badges || []), ...(u.self_badges || [])];
+      const bh = all.length ? '<div class="badge-list">' + all.map(badgeHtml).join("") + "</div>" : '<span style="color:var(--text-3)">—</span>';
 
       const cells = [
-        ["Status", user.presence?.status || "offline"],
-        ["Role", user.platform_role || "user"],
-        ["Mobile", user.presence?.is_mobile ? "Yes" : "No"],
-        [
-          "Spotify",
-          user.spotify?.now_playing ||
-            (user.spotify?.connected ? "Connected" : "—"),
-        ],
-        ["Bio", user.bio || "—"],
-        ["Custom Status", user.presence?.custom_status?.text || "—"],
+        ["Status", u.presence?.status || "offline"],
+        ["Role", u.platform_role || "user"],
+        ["Mobile", u.presence?.is_mobile ? "Yes" : "No"],
+        ["Spotify", u.spotify?.now_playing || (u.spotify?.connected ? "Connected" : "—")],
+        ["Bio", u.bio || "—"],
+        ["Custom Status", u.presence?.custom_status?.text || "—"],
       ];
 
-      let gridHtml = cells
-        .map(
-          ([label, value]) => `
-          <div class="detail-cell">
-            <div class="label">${label}</div>
-            <div class="value">${value}</div>
-          </div>`
-        )
-        .join("");
+      let g = cells.map(([l, v]) => `<div><div class="lbl">${l}</div><div class="val">${v}</div></div>`).join("");
+      g += `<div class="full"><div class="lbl">Badges</div><div class="val">${bh}</div></div>`;
+      g += `<div class="full"><div class="lbl">API</div><div class="val mono">${API}/v1/users/${u.id}</div></div>`;
+      document.getElementById("dG").innerHTML = g;
 
-      gridHtml += `
-        <div class="detail-cell" style="grid-column: 1 / -1;">
-          <div class="label">Badges</div>
-          <div class="value">${badgeHtml}</div>
-        </div>`;
-
-      gridHtml += `
-        <div class="detail-cell" style="grid-column: 1 / -1;">
-          <div class="label">API</div>
-          <div class="value mono">${API}/v1/users/${user.id}</div>
-        </div>`;
-
-      document.getElementById("detailGrid").innerHTML = gridHtml;
-
-      const jsonPanel = document.getElementById("jsonPanel");
-      jsonPanel.style.display = "block";
-      document.getElementById("jsonOutput").textContent = JSON.stringify(
-        user,
-        null,
-        2
-      );
-
+      const jp = document.getElementById("jP");
+      jp.classList.add("vis");
+      document.getElementById("jO").textContent = JSON.stringify(u, null, 2);
       lucide.createIcons();
-
-      panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      p.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    async function searchUser() {
-      const query = document.getElementById("searchInput").value.trim();
-      if (!query) return;
-
-      if (query.startsWith("usr_") || /^[a-f0-9]{16}$/.test(query)) {
+    async function doSearch() {
+      const q = document.getElementById("q").value.trim();
+      if (!q) return;
+      if (q.startsWith("usr_") || /^[a-f0-9]{16}$/.test(q)) {
         try {
-          const res = await fetch(`${API}/v1/users/${query}`);
-          const json = await res.json();
-          if (json.success && json.data) {
-            const exists = allUsers.findIndex((u) => u.id === json.data.id);
-            if (exists >= 0) allUsers[exists] = json.data;
-            else allUsers.unshift(json.data);
-            renderUsers();
-            showDetail(json.data.id);
+          const r = await fetch(API + "/v1/users/" + q);
+          const j = await r.json();
+          if (j.success && j.data) {
+            const idx = users.findIndex(u => u.id === j.data.id);
+            if (idx >= 0) users[idx] = j.data; else users.unshift(j.data);
+            render();
+            detail(j.data.id);
             return;
           }
         } catch {}
       }
-
-      renderUsers();
+      render();
     }
 
-    function connectWebSocket() {
-      ws = new WebSocket(WS_URL);
-
+    function connectWS() {
+      ws = new WebSocket(WSU);
       ws.onopen = () => {
-        document.getElementById("wsIndicator").classList.add("connected");
-        document.getElementById("wsStatus").textContent = "connected";
-        logWsEvent("CONNECTED", "websocket connected");
+        document.getElementById("wsI").classList.add("on");
+        document.getElementById("wsS").textContent = "connected";
+        logEv("CONNECTED", "");
       };
-
-      ws.onmessage = (e) => {
-        let msg;
-        try {
-          msg = JSON.parse(e.data);
-        } catch {
+      ws.onmessage = e => {
+        let m; try { m = JSON.parse(e.data); } catch { return; }
+        if (m.op === 1) {
+          clearInterval(hb);
+          hb = setInterval(() => { if (ws?.readyState === 1) ws.send(JSON.stringify({ op: 3 })); }, m.d?.heartbeat_interval || 30000);
+          const ids = users.map(u => u.id);
+          if (ids.length) { ws.send(JSON.stringify({ op: 2, d: { subscribe_to_ids: ids } })); logEv("SUBSCRIBE", ids.length + " users"); }
           return;
         }
-
-        if (msg.op === 1) {
-          const interval = msg.d?.heartbeat_interval || 30000;
-          clearInterval(heartbeatInterval);
-          heartbeatInterval = setInterval(() => {
-            if (ws?.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ op: 3 }));
-            }
-          }, interval);
-
-          const ids = allUsers.map((u) => u.id);
-          if (ids.length) {
-            ws.send(JSON.stringify({ op: 2, d: { subscribe_to_ids: ids } }));
-            logWsEvent("SUBSCRIBE", `subscribed to ${ids.length} users`);
-          }
-          return;
-        }
-
-        if (msg.t === "INIT_STATE") {
-          logWsEvent("INIT_STATE", msg.d?.display_name || msg.d?.id);
-          return;
-        }
-
-        if (msg.t === "PRESENCE_UPDATE") {
-          const updated = msg.d;
-          if (!updated?.id) return;
-
-          const idx = allUsers.findIndex((u) => u.id === updated.id);
-          if (idx >= 0) allUsers[idx] = { ...allUsers[idx], ...updated };
-          else allUsers.push(updated);
-
-          updateStats();
-          renderUsers();
-
-          const name = updated.display_name || updated.username || updated.id;
-          logWsEvent("PRESENCE_UPDATE", `${name} → ${updated.presence?.status}`);
+        if (m.t === "INIT_STATE") { logEv("INIT_STATE", m.d?.display_name || m.d?.id); return; }
+        if (m.t === "PRESENCE_UPDATE") {
+          const d = m.d; if (!d?.id) return;
+          const idx = users.findIndex(u => u.id === d.id);
+          if (idx >= 0) users[idx] = { ...users[idx], ...d }; else users.push(d);
+          stats(); render();
+          logEv("PRESENCE_UPDATE", (d.display_name || d.username || d.id) + " → " + d.presence?.status);
         }
       };
-
       ws.onclose = () => {
-        document.getElementById("wsIndicator").classList.remove("connected");
-        document.getElementById("wsStatus").textContent = "reconnecting...";
-        clearInterval(heartbeatInterval);
-        logWsEvent("DISCONNECTED", "reconnecting in 5s");
-        setTimeout(connectWebSocket, 5000);
+        document.getElementById("wsI").classList.remove("on");
+        document.getElementById("wsS").textContent = "reconnecting...";
+        clearInterval(hb);
+        logEv("DISCONNECTED", "");
+        setTimeout(connectWS, 5000);
       };
     }
 
-    function logWsEvent(type, data) {
+    function logEv(type, data) {
       const now = new Date().toLocaleTimeString("en-US", { hour12: false });
-      eventLog.unshift({ time: now, type, data });
-      if (eventLog.length > 50) eventLog.pop();
-
-      const container = document.getElementById("wsEvents");
-      document.getElementById("eventCount").textContent = `${eventLog.length} events`;
-
-      container.innerHTML = eventLog
-        .map(
-          (e) => `
-          <div class="ws-event">
-            <span class="time">${e.time}</span>
-            <span class="type">${e.type}</span>
-            <span class="data">${e.data}</span>
-          </div>`
-        )
-        .join("");
+      evts.unshift({ time: now, type, data });
+      if (evts.length > 50) evts.pop();
+      document.getElementById("eC").textContent = evts.length + " events";
+      document.getElementById("wE").innerHTML = evts.map(e =>
+        `<div class="ws-ev"><span class="t">${e.time}</span><span class="tp">${e.type}</span><span class="d">${e.data}</span></div>`
+      ).join("");
     }
 
-    fetchUsers();
-    setInterval(fetchUsers, 30000);
-    connectWebSocket();
+    load();
+    setInterval(load, 30000);
+    connectWS();
   </script>
 </body>
 </html>
