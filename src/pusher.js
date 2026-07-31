@@ -144,6 +144,14 @@ async function handleCommand(msg) {
   }
 }
 
+function formatBadge(b) {
+  return `${b.icon || "🏅"} ${b.name}`;
+}
+
+function formatBadgeList(badges) {
+  return badges.map(formatBadge).join(", ");
+}
+
 async function cmdStatus(query, reply) {
   if (!query) return reply("`usage: /status <username>`");
   const user = findUser(query);
@@ -186,8 +194,15 @@ async function cmdProfile(query, reply) {
   t += `\`role      ${user.platform_role}\`\n`;
   if (user.bio) t += `\`bio       ${user.bio}\`\n`;
   if (p.is_mobile) t += "`device    mobile`\n";
-  if (user.badges?.length) t += `\`badges    ${user.badges.join(", ")}\`\n`;
-  if (user.self_badges?.length) t += `\`tags      ${user.self_badges.join(", ")}\`\n`;
+
+  if (user.badges?.length) {
+    t += `\`badges    ${formatBadgeList(user.badges)}\`\n`;
+  }
+
+  if (user.self_badges?.length) {
+    t += `\`tags      ${formatBadgeList(user.self_badges)}\`\n`;
+  }
+
   if (user.tag) t += `\`server    ${user.tag.text || ""} (${user.tag.server_name})\`\n`;
   if (user.socials?.youtube) t += `\`youtube   ${user.socials.youtube}\`\n`;
   if (user.socials?.twitch) t += `\`twitch    ${user.socials.twitch}\`\n`;
@@ -253,11 +268,29 @@ async function cmdBadges(query, reply) {
   const user = findUser(query);
   if (!user) return reply(`\`user "${query}" not found\``);
 
-  const all = [...new Set([...(user.badges || []), ...(user.self_badges || [])])];
+  const all = [...(user.badges || []), ...(user.self_badges || [])];
   if (!all.length) return reply(`\`${user.display_name} has no badges\``);
 
-  let t = `\`${user.display_name} badges (${all.length})\`\n\n`;
-  all.forEach((b) => (t += `\`  ${b}\`\n`));
+  let t = `\`${user.display_name} — ${all.length} badge${all.length !== 1 ? "s" : ""}\`\n\n`;
+
+  const platform = all.filter((b) => b.type === "badge");
+  const self = all.filter((b) => b.type === "self");
+
+  if (platform.length) {
+    t += "`platform badges`\n";
+    platform.forEach((b) => {
+      const color = b.color ? ` (${b.color})` : "";
+      t += `\`  ${b.icon || "🏅"} ${b.name}${color}\`\n`;
+    });
+    t += "\n";
+  }
+
+  if (self.length) {
+    t += "`self badges`\n";
+    self.forEach((b) => {
+      t += `\`  ${b.icon || "🏷️"} ${b.name}\`\n`;
+    });
+  }
 
   return reply(t);
 }
@@ -409,6 +442,9 @@ async function cmdStats(reply) {
   const spotify = users.filter((u) => u.spotify?.connected).length;
   const withBio = users.filter((u) => u.bio).length;
   const withAvatar = users.filter((u) => u.avatar_url).length;
+  const withBadges = users.filter(
+    (u) => (u.badges?.length || 0) + (u.self_badges?.length || 0) > 0
+  ).length;
 
   let t = `\`beacon stats\`\n\n`;
   t += `\`users       ${total}\`\n`;
@@ -420,6 +456,7 @@ async function cmdStats(reply) {
   t += `\`spotify     ${spotify}\`\n`;
   t += `\`has bio     ${withBio}\`\n`;
   t += `\`has avatar  ${withAvatar}\`\n`;
+  t += `\`has badges  ${withBadges}\`\n`;
   t += `\`uptime      ${formatUptime(Date.now() - START_TIME)}\`\n`;
   t += `\`commands    ${commandsRun}\`\n`;
   t += `\`channels    ${subs.size}\`\n`;

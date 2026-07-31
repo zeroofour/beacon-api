@@ -9,6 +9,116 @@ const HEADERS = {
   Referer: "https://distalk.app/",
 };
 
+const BADGE_MAP = {
+  owner: { name: "Owner", icon: "👑" },
+  admin: { name: "Admin", icon: "🛡️" },
+  moderator: { name: "Moderator", icon: "🔨" },
+  staff: { name: "Staff", icon: "⚙️" },
+  supporter: { name: "Supporter", icon: "❤️" },
+  early_supporter: { name: "Early Supporter", icon: "🌟" },
+  og: { name: "OG", icon: "🏆" },
+  active_developer: { name: "Active Developer", icon: "💻" },
+  developer: { name: "Developer", icon: "🔧" },
+  designer: { name: "Designer", icon: "🎨" },
+  bug_hunter: { name: "Bug Hunter", icon: "🐛" },
+  translator: { name: "Translator", icon: "🌐" },
+  verified: { name: "Verified", icon: "✅" },
+  partner: { name: "Partner", icon: "🤝" },
+  contributor: { name: "Contributor", icon: "📦" },
+  bot: { name: "Bot", icon: "🤖" },
+  premium: { name: "Premium", icon: "💎" },
+  nitro: { name: "Nitro", icon: "🚀" },
+  booster: { name: "Booster", icon: "🔮" },
+  streamer: { name: "Streamer", icon: "📺" },
+  artist: { name: "Artist", icon: "🖌️" },
+  musician: { name: "Musician", icon: "🎵" },
+  content_creator: { name: "Content Creator", icon: "🎬" },
+  tester: { name: "Tester", icon: "🧪" },
+  hypesquad: { name: "HypeSquad", icon: "🏠" },
+};
+
+let dynamicBadgeMap = {};
+
+function setBadgeDefinitions(badges) {
+  dynamicBadgeMap = {};
+  badges.forEach((b) => {
+    dynamicBadgeMap[b.id] = b;
+  });
+}
+
+function parseBadge(badge) {
+  if (typeof badge === "object" && badge !== null) {
+    const id = (badge.id || badge.name || "unknown").toLowerCase().replace(/\s+/g, "_");
+    const mapped = dynamicBadgeMap[id] || BADGE_MAP[id];
+    return {
+      id,
+      name: badge.label || badge.name || badge.title || mapped?.name || id,
+      icon: badge.emoji || badge.icon || mapped?.icon || "🏅",
+      lucide_icon: mapped?.lucide_icon || null,
+      color: badge.color || mapped?.color || null,
+      type: "badge",
+    };
+  }
+
+  const key = String(badge).toLowerCase().replace(/\s+/g, "_");
+  const mapped = dynamicBadgeMap[key] || BADGE_MAP[key];
+
+  if (mapped) {
+    return {
+      id: key,
+      name: mapped.name,
+      icon: mapped.icon || "🏅",
+      lucide_icon: mapped.lucide_icon || null,
+      color: mapped.color || null,
+      type: "badge",
+    };
+  }
+
+  return {
+    id: key,
+    name: String(badge),
+    icon: "🏅",
+    lucide_icon: null,
+    color: null,
+    type: "badge",
+  };
+}
+
+function parseSelfBadge(badge) {
+  if (typeof badge === "object" && badge !== null) {
+    return {
+      id: (badge.id || badge.name || "unknown").toLowerCase().replace(/\s+/g, "_"),
+      name: badge.label || badge.name || badge.title || badge.text || "Unknown",
+      icon: badge.emoji || badge.icon || null,
+      color: badge.color || null,
+      type: "self",
+    };
+  }
+
+  const str = String(badge);
+  const emojiMatch = str.match(
+    /^([\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]|[\u{FE00}-\u{FEFF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{200D}\u{20E3}\u{FE0F}]|[\u{1F1E0}-\u{1F1FF}]{2}|.)\s*(.*)/u
+  );
+
+  if (emojiMatch && emojiMatch[2]) {
+    return {
+      id: emojiMatch[2].toLowerCase().replace(/\s+/g, "_"),
+      name: emojiMatch[2],
+      icon: emojiMatch[1],
+      color: null,
+      type: "self",
+    };
+  }
+
+  return {
+    id: str.toLowerCase().replace(/\s+/g, "_"),
+    name: str,
+    icon: null,
+    color: null,
+    type: "self",
+  };
+}
+
 async function fetchAllUsers() {
   try {
     const res = await fetch(`${BASE}/index.php?api=state`, {
@@ -80,8 +190,8 @@ function clean(u) {
       spotify: u.social_spotify || null,
       tiktok: u.social_tiktok || null,
     },
-    badges: u.badges || [],
-    self_badges: u.self_badges || [],
+    badges: (u.badges || []).map(parseBadge),
+    self_badges: (u.self_badges || []).map(parseSelfBadge),
     tag: u.tag || null,
   };
 }
@@ -129,4 +239,68 @@ async function send(channelId, body, serverId) {
   }
 }
 
-module.exports = { fetchAllUsers, fetchMessages, send };
+async function fetchBadgeDefinitions() {
+  try {
+    const res = await fetch(`${BASE}/index.php`, {
+      headers: {
+        Cookie: COOKIE,
+        "User-Agent": "Mozilla/5.0",
+      },
+    });
+
+    const html = await res.text();
+    const badges = [];
+
+    const badgeRegex =
+      /class="user-badge[^"]*"[^>]*title="([^"]*)"[^>]*>([\s\S]*?)<span>([^<]*)<\/span>/g;
+    let match;
+
+    while ((match = badgeRegex.exec(html)) !== null) {
+      const title = match[1];
+      const inner = match[2];
+      const name = match[3].trim();
+
+      let icon = null;
+      const emojiMatch = inner.match(/class="self-badge-emoji"[^>]*>([\s\S]*?)<\/span>/);
+      if (emojiMatch) {
+        icon = emojiMatch[1].trim();
+      }
+
+      let lucideIcon = null;
+      const lucideMatch = inner.match(/data-lucide="([^"]*)"/);
+      if (lucideMatch) {
+        lucideIcon = lucideMatch[1];
+      }
+
+      let color = null;
+      const styleMatch = inner.match(/style="[^"]*color:\s*([^;"]*)/);
+      if (styleMatch) {
+        color = styleMatch[1].trim();
+      }
+
+      const id = name.toLowerCase().replace(/\s+/g, "_");
+
+      badges.push({
+        id,
+        name,
+        title: title || name,
+        icon,
+        lucide_icon: lucideIcon,
+        color,
+      });
+    }
+
+    return badges;
+  } catch (e) {
+    console.error("[Fetcher] Badge scrape failed:", e.message);
+    return [];
+  }
+}
+
+module.exports = {
+  fetchAllUsers,
+  fetchMessages,
+  send,
+  fetchBadgeDefinitions,
+  setBadgeDefinitions,
+};
