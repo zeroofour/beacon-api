@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 const SECTIONS = [
   { id: "overview", label: "Overview" },
@@ -13,73 +12,46 @@ const SECTIONS = [
   { id: "websocket", label: "WebSocket" },
   { id: "webhooks", label: "Webhooks" },
   { id: "examples", label: "Examples" },
-  { id: "commands", label: "Commands" },
-];
-
-const COMMANDS = [
-  ["/status <user>", "Current status"],
-  ["/profile <user>", "Full profile"],
-  ["/userid <user>", "Get user ID"],
-  ["/whois <id>", "Resolve ID"],
-  ["/avatar <user>", "Avatar URL"],
-  ["/badges <user>", "List badges"],
-  ["/bio <user>", "User bio"],
-  ["/socials <user>", "Social links"],
-  ["/tag <user>", "Server tag"],
-  ["/spotify <user>", "Now playing"],
-  ["/compare <a> <b>", "Compare users"],
-  ["/online", "Online users"],
-  ["/offline", "Recently offline"],
-  ["/mobile", "Mobile users"],
-  ["/role <role>", "Users by role"],
-  ["/search <query>", "Search users"],
-  ["/random", "Random user"],
-  ["/api <user>", "Raw JSON"],
-  ["/kv [user]", "View KV data"],
-  ["/kv set <k> <v>", "Set KV"],
-  ["/kv del <key>", "Delete KV"],
-  ["/set <key> <val>", "Store value"],
-  ["/get <key>", "Get value"],
-  ["/del <key>", "Delete key"],
-  ["/keys", "List keys"],
-  ["/note <user> <text>", "Add note"],
-  ["/notes <user>", "View notes"],
-  ["/server", "Server info"],
-  ["/stats", "Bot stats"],
-  ["/count", "User count"],
-  ["/uptime", "Bot uptime"],
-  ["/ping", "Latency"],
-  ["/help", "List commands"],
-  ["/docs", "API docs"],
-  ["/privacy", "Privacy policy"],
 ];
 
 function Endpoint({ method, path, desc, children }) {
   const colors = {
-    GET: "bg-green-500/10 text-green-400",
-    PUT: "bg-yellow-500/10 text-yellow-400",
-    DELETE: "bg-red-500/10 text-red-400",
-    POST: "bg-violet-500/10 text-violet-400",
-    WSS: "bg-blue-500/10 text-blue-400",
+    GET: "bg-emerald-500/8 text-emerald-400 border border-emerald-500/10",
+    PUT: "bg-amber-500/8 text-amber-400 border border-amber-500/10",
+    DELETE: "bg-red-500/8 text-red-400 border border-red-500/10",
+    POST: "bg-violet-500/8 text-violet-400 border border-violet-500/10",
+    WSS: "bg-blue-500/8 text-blue-400 border border-blue-500/10",
   };
 
   return (
-    <Card className="mb-3 transition-colors hover:border-border/80">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2.5 mb-2">
-          <span className={`text-[11px] font-mono font-semibold px-2 py-0.5 rounded ${colors[method] || ""}`}>{method}</span>
-          <code className="text-sm text-foreground">{path}</code>
+    <div className="mb-4 rounded-xl border border-border/40 bg-card/50 overflow-hidden transition-colors hover:border-border/60">
+      <div className="flex items-center gap-2.5 px-4 py-3">
+        <span
+          className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md ${colors[method] || ""}`}
+        >
+          {method}
+        </span>
+        <code className="text-[13px] text-foreground/90">{path}</code>
+      </div>
+      {(desc || children) && (
+        <div className="px-4 pb-4 space-y-3">
+          {desc && (
+            <p className="text-[13px] text-muted-foreground leading-relaxed">
+              {desc}
+            </p>
+          )}
+          {children}
         </div>
-        {desc && <p className="text-sm text-muted-foreground mb-3">{desc}</p>}
-        {children}
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }
 
 function Code({ children, className = "" }) {
   return (
-    <pre className={`bg-muted/50 border border-border rounded-lg p-3 text-xs font-mono overflow-x-auto leading-relaxed ${className}`}>
+    <pre
+      className={`bg-background/80 border border-border/30 rounded-lg p-3.5 text-[11px] font-mono overflow-x-auto leading-[1.7] text-muted-foreground ${className}`}
+    >
       {children}
     </pre>
   );
@@ -92,9 +64,7 @@ export default function Docs() {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActive(entry.target.id);
-          }
+          if (entry.isIntersecting) setActive(entry.target.id);
         });
       },
       { rootMargin: "-20% 0% -70% 0%" }
@@ -109,22 +79,26 @@ export default function Docs() {
   }, []);
 
   return (
-    <div className="flex max-w-6xl mx-auto">
-      <aside className="w-56 shrink-0 border-r border-border sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto py-8 px-4 max-lg:hidden">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-2">On this page</p>
+    <div className="flex max-w-6xl mx-auto min-h-[calc(100vh-3rem)]">
+      <aside className="w-52 shrink-0 border-r border-border/40 sticky top-12 h-[calc(100vh-3rem)] overflow-y-auto py-8 px-3 max-lg:hidden">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-3 px-2">
+          On this page
+        </p>
         <nav className="space-y-0.5">
           {SECTIONS.map((s) => (
             <a
               key={s.id}
               href={`#${s.id}`}
-              className={`relative block px-2 py-1 text-sm rounded-md transition-all duration-200 ${
-                active === s.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+              className={`relative block px-2.5 py-1 text-[13px] rounded-md transition-all duration-150 ${
+                active === s.id
+                  ? "text-foreground"
+                  : "text-muted-foreground/70 hover:text-foreground"
               }`}
             >
               {active === s.id && (
                 <motion.div
-                  layoutId="docs-active"
-                  className="absolute inset-0 bg-muted rounded-md"
+                  layoutId="docs-pill"
+                  className="absolute inset-0 bg-muted/60 rounded-md"
                   transition={{ type: "spring", stiffness: 500, damping: 35 }}
                 />
               )}
@@ -134,27 +108,62 @@ export default function Docs() {
         </nav>
       </aside>
 
-      <main className="flex-1 max-w-3xl px-8 py-12 max-lg:px-6">
-        <h1 id="overview" className="text-3xl font-bold tracking-tight mb-2 scroll-mt-20">Documentation</h1>
-        <p className="text-muted-foreground mb-12">
-          Beacon is a real-time presence API for DisTalk. Track user status, activity, and Spotify data through REST or WebSocket.
-        </p>
+      <main className="flex-1 max-w-3xl px-10 py-10 max-lg:px-6">
+        <div className="mb-12">
+          <h1
+            id="overview"
+            className="text-2xl font-bold tracking-tight mb-2 scroll-mt-16"
+          >
+            Documentation
+          </h1>
+          <p className="text-[14px] text-muted-foreground/80 leading-relaxed max-w-lg">
+            Beacon is a real-time presence API for DisTalk. Track user status,
+            activity, and Spotify data through REST or WebSocket.
+          </p>
+        </div>
 
-        <h2 id="base-url" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">Base URL</h2>
-        <Card className="mb-8">
-          <CardContent className="p-4 flex items-center gap-3">
-            <Badge variant="secondary" className="text-[10px]">BASE</Badge>
-            <code className="text-sm text-violet-400">https://api-beacon.up.railway.app</code>
-          </CardContent>
-        </Card>
+        <section className="mb-12">
+          <h2
+            id="base-url"
+            className="text-[15px] font-semibold mb-4 scroll-mt-16"
+          >
+            Base URL
+          </h2>
+          <div className="rounded-xl border border-border/40 bg-card/50 px-4 py-3 flex items-center gap-3">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+              Base
+            </span>
+            <code className="text-[13px] text-violet-400 select-all">
+              https://api-beacon.up.railway.app
+            </code>
+          </div>
+        </section>
 
-        <h2 id="users" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">Users</h2>
-        <Endpoint method="GET" path="/v1/users" desc="Returns all tracked users. Filter with ?ids=id1,id2.">
-          <Code>curl https://api-beacon.up.railway.app/v1/users</Code>
-        </Endpoint>
-        <Endpoint method="GET" path="/v1/users/:id" desc="Returns a single user by ID.">
-          <Code>curl https://api-beacon.up.railway.app/v1/users/usr_8f7220facabf757f</Code>
-          <Code className="mt-2 text-green-400">{`{
+        <section className="mb-12">
+          <h2
+            id="users"
+            className="text-[15px] font-semibold mb-4 scroll-mt-16"
+          >
+            Users
+          </h2>
+          <Endpoint
+            method="GET"
+            path="/v1/users"
+            desc="Returns all tracked users. Filter with ?ids=id1,id2."
+          >
+            <Code>
+              curl https://api-beacon.up.railway.app/v1/users
+            </Code>
+          </Endpoint>
+          <Endpoint
+            method="GET"
+            path="/v1/users/:id"
+            desc="Returns a single user by ID."
+          >
+            <Code>
+              curl https://api-beacon.up.railway.app/v1/users/usr_8f7220facabf757f
+            </Code>
+            <Code className="mt-2">{`{
   "success": true,
   "data": {
     "id": "usr_8f7220facabf757f",
@@ -165,72 +174,199 @@ export default function Docs() {
     "kv": {}
   }
 }`}</Code>
-        </Endpoint>
+          </Endpoint>
+        </section>
 
-        <h2 id="presence" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">Presence</h2>
-        <Endpoint method="GET" path="/v1/users/:id/presence" desc="Returns only the presence object." />
+        <section className="mb-12">
+          <h2
+            id="presence"
+            className="text-[15px] font-semibold mb-4 scroll-mt-16"
+          >
+            Presence
+          </h2>
+          <Endpoint
+            method="GET"
+            path="/v1/users/:id/presence"
+            desc="Returns only the presence object for a user."
+          />
+        </section>
 
-        <h2 id="kv" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">KV Store</h2>
-        <p className="text-sm text-muted-foreground mb-4">Per-user key-value storage for metadata.</p>
-        <Endpoint method="GET" path="/v1/users/:id/kv" desc="All KV pairs." />
-        <Endpoint method="GET" path="/v1/users/:id/kv/:key" desc="A single KV value." />
-        <Endpoint method="PUT" path="/v1/users/:id/kv/:key" desc="Set a KV value. Requires Authorization header.">
-          <Code>{`curl -X PUT https://api-beacon.up.railway.app/v1/users/:id/kv/website \\
+        <section className="mb-12">
+          <h2
+            id="kv"
+            className="text-[15px] font-semibold mb-2 scroll-mt-16"
+          >
+            KV Store
+          </h2>
+          <p className="text-[13px] text-muted-foreground/80 mb-4">
+            Per-user key-value storage for metadata like website URLs or
+            pronouns.
+          </p>
+          <Endpoint
+            method="GET"
+            path="/v1/users/:id/kv"
+            desc="All KV pairs for a user."
+          />
+          <Endpoint
+            method="GET"
+            path="/v1/users/:id/kv/:key"
+            desc="A single KV value."
+          />
+          <Endpoint
+            method="PUT"
+            path="/v1/users/:id/kv/:key"
+            desc="Set a KV value. Requires Authorization header."
+          >
+            <Code>{`curl -X PUT https://api-beacon.up.railway.app/v1/users/:id/kv/website \\
   -H "Authorization: your-api-key" \\
   -d '"https://example.com"'`}</Code>
-        </Endpoint>
-        <Endpoint method="DELETE" path="/v1/users/:id/kv/:key" desc="Delete a KV value. Requires Authorization header." />
+          </Endpoint>
+          <Endpoint
+            method="DELETE"
+            path="/v1/users/:id/kv/:key"
+            desc="Delete a KV value. Requires Authorization header."
+          />
+        </section>
 
-        <h2 id="badges" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">Badges</h2>
-        <Endpoint method="GET" path="/v1/badges" desc="Returns all known badge definitions." />
+        <section className="mb-12">
+          <h2
+            id="badges"
+            className="text-[15px] font-semibold mb-4 scroll-mt-16"
+          >
+            Badges
+          </h2>
+          <Endpoint
+            method="GET"
+            path="/v1/badges"
+            desc="Returns all known badge definitions scraped from DisTalk."
+          />
+        </section>
 
-        <h2 id="websocket" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">WebSocket</h2>
-        <Endpoint method="WSS" path="wss://api-beacon.up.railway.app/socket" desc="Real-time presence updates.">
-          <Code>{`const ws = new WebSocket("wss://api-beacon.up.railway.app/socket");
+        <section className="mb-12">
+          <h2
+            id="websocket"
+            className="text-[15px] font-semibold mb-2 scroll-mt-16"
+          >
+            WebSocket
+          </h2>
+          <p className="text-[13px] text-muted-foreground/80 mb-4">
+            Subscribe to real-time presence updates over a persistent connection.
+          </p>
+          <Endpoint
+            method="WSS"
+            path="wss://api-beacon.up.railway.app/socket"
+            desc="Real-time presence updates."
+          >
+            <Code>{`const ws = new WebSocket("wss://api-beacon.up.railway.app/socket");
 
+// Subscribe to users
 ws.send(JSON.stringify({
   op: 2,
   d: { subscribe_to_ids: ["usr_8f7220facabf757f"] }
 }));
 
+// Heartbeat every 30s
 setInterval(() => ws.send(JSON.stringify({ op: 3 })), 30000);`}</Code>
-        </Endpoint>
+          </Endpoint>
 
-        <h2 id="webhooks" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">Webhooks</h2>
-        <Endpoint method="POST" path="/github" desc="GitHub webhook endpoint. Posts events to DisTalk." />
-
-        <h2 id="examples" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">Examples</h2>
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">JavaScript</p>
-        <Code className="mb-4">{`const res = await fetch("https://api-beacon.up.railway.app/v1/users/usr_8f7220facabf757f");
-const { data } = await res.json();
-console.log(data.presence.status);`}</Code>
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Python</p>
-        <Code>{`import requests
-res = requests.get("https://api-beacon.up.railway.app/v1/users/usr_8f7220facabf757f")
-print(res.json()["data"]["presence"]["status"])`}</Code>
-
-        <h2 id="commands" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">Chat Commands</h2>
-        <p className="text-sm text-muted-foreground mb-4">Available in any DisTalk channel where Beacon is present.</p>
-        <Card>
-          <CardContent className="p-0">
-            <table className="w-full">
+          <div className="rounded-xl border border-border/40 bg-card/50 overflow-hidden">
+            <table className="w-full text-[13px]">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground p-3 px-4">Command</th>
-                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground p-3 px-4">Description</th>
+                <tr className="border-b border-border/30">
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50 p-3 px-4 w-12">
+                    Op
+                  </th>
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50 p-3 px-4">
+                    Direction
+                  </th>
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50 p-3 px-4">
+                    Description
+                  </th>
                 </tr>
               </thead>
-              <tbody>
-                {COMMANDS.map(([cmd, desc]) => (
-                  <tr key={cmd} className="border-b border-border last:border-0 transition-colors hover:bg-muted/30">
-                    <td className="p-3 px-4 font-mono text-xs text-violet-400">{cmd}</td>
-                    <td className="p-3 px-4 text-sm text-muted-foreground">{desc}</td>
+              <tbody className="text-muted-foreground">
+                {[
+                  ["0", "Server → Client", "Event dispatch"],
+                  ["1", "Server → Client", "Hello"],
+                  ["2", "Client → Server", "Subscribe"],
+                  ["3", "Client → Server", "Heartbeat"],
+                  ["4", "Client → Server", "Unsubscribe"],
+                ].map(([op, dir, desc]) => (
+                  <tr
+                    key={op}
+                    className="border-b border-border/20 last:border-0"
+                  >
+                    <td className="p-3 px-4 font-mono text-violet-400/70">
+                      {op}
+                    </td>
+                    <td className="p-3 px-4">{dir}</td>
+                    <td className="p-3 px-4">{desc}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
+
+        <section className="mb-12">
+          <h2
+            id="webhooks"
+            className="text-[15px] font-semibold mb-4 scroll-mt-16"
+          >
+            Webhooks
+          </h2>
+          <Endpoint
+            method="POST"
+            path="/github"
+            desc="GitHub webhook endpoint. Forwards push, PR, issue, and release events to DisTalk."
+          />
+        </section>
+
+        <section className="mb-12">
+          <h2
+            id="examples"
+            className="text-[15px] font-semibold mb-4 scroll-mt-16"
+          >
+            Examples
+          </h2>
+
+          <div className="space-y-4">
+            <div>
+              <p className="text-[11px] font-medium text-muted-foreground/50 uppercase tracking-wider mb-2">
+                JavaScript
+              </p>
+              <Code>{`const res = await fetch("https://api-beacon.up.railway.app/v1/users/usr_8f7220facabf757f");
+const { data } = await res.json();
+console.log(data.presence.status);`}</Code>
+            </div>
+
+            <div>
+              <p className="text-[11px] font-medium text-muted-foreground/50 uppercase tracking-wider mb-2">
+                Python
+              </p>
+              <Code>{`import requests
+res = requests.get("https://api-beacon.up.railway.app/v1/users/usr_8f7220facabf757f")
+print(res.json()["data"]["presence"]["status"])`}</Code>
+            </div>
+
+            <div>
+              <p className="text-[11px] font-medium text-muted-foreground/50 uppercase tracking-wider mb-2">
+                WebSocket
+              </p>
+              <Code>{`const ws = new WebSocket("wss://api-beacon.up.railway.app/socket");
+ws.onmessage = (e) => {
+  const msg = JSON.parse(e.data);
+  if (msg.t === "PRESENCE_UPDATE") {
+    console.log(msg.d.presence.status);
+  }
+};`}</Code>
+            </div>
+          </div>
+        </section>
+
+        <footer className="pt-8 pb-4 border-t border-border/30 text-[11px] text-muted-foreground/30">
+          Beacon · DisTalk Presence API
+        </footer>
       </main>
     </div>
   );

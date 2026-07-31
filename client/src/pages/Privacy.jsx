@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
 
 const SECTIONS = [
   { id: "overview", label: "Overview" },
@@ -17,21 +16,21 @@ const SECTIONS = [
 
 function DataList({ items }) {
   return (
-    <Card className="mb-4">
-      <CardContent className="p-0">
-        {items.map((item, i) => (
-          <div
-            key={i}
-            className={`flex items-start gap-3 px-4 py-3 text-sm text-muted-foreground ${
-              i < items.length - 1 ? "border-b border-border" : ""
-            }`}
-          >
-            <span className="text-muted-foreground/40 mt-1.5 shrink-0">·</span>
-            {item}
-          </div>
-        ))}
-      </CardContent>
-    </Card>
+    <div className="rounded-xl border border-border/40 bg-card/50 overflow-hidden mb-6">
+      {items.map((item, i) => (
+        <div
+          key={i}
+          className={`flex items-start gap-3 px-4 py-2.5 text-[13px] text-muted-foreground/80 ${
+            i < items.length - 1 ? "border-b border-border/20" : ""
+          }`}
+        >
+          <span className="text-muted-foreground/30 mt-1 shrink-0 text-[8px]">
+            ●
+          </span>
+          <span className="leading-relaxed">{item}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -42,9 +41,7 @@ export default function Privacy() {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActive(entry.target.id);
-          }
+          if (entry.isIntersecting) setActive(entry.target.id);
         });
       },
       { rootMargin: "-20% 0% -70% 0%" }
@@ -59,22 +56,26 @@ export default function Privacy() {
   }, []);
 
   return (
-    <div className="flex max-w-6xl mx-auto">
-      <aside className="w-56 shrink-0 border-r border-border sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto py-8 px-4 max-lg:hidden">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-2">Sections</p>
+    <div className="flex max-w-6xl mx-auto min-h-[calc(100vh-3rem)]">
+      <aside className="w-52 shrink-0 border-r border-border/40 sticky top-12 h-[calc(100vh-3rem)] overflow-y-auto py-8 px-3 max-lg:hidden">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-3 px-2">
+          Sections
+        </p>
         <nav className="space-y-0.5">
           {SECTIONS.map((s) => (
             <a
               key={s.id}
               href={`#${s.id}`}
-              className={`relative block px-2 py-1 text-sm rounded-md transition-all duration-200 ${
-                active === s.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+              className={`relative block px-2.5 py-1 text-[13px] rounded-md transition-all duration-150 ${
+                active === s.id
+                  ? "text-foreground"
+                  : "text-muted-foreground/70 hover:text-foreground"
               }`}
             >
               {active === s.id && (
                 <motion.div
-                  layoutId="privacy-active"
-                  className="absolute inset-0 bg-muted rounded-md"
+                  layoutId="privacy-pill"
+                  className="absolute inset-0 bg-muted/60 rounded-md"
                   transition={{ type: "spring", stiffness: 500, damping: 35 }}
                 />
               )}
@@ -84,72 +85,162 @@ export default function Privacy() {
         </nav>
       </aside>
 
-      <main className="flex-1 max-w-3xl px-8 py-12 max-lg:px-6">
-        <h1 id="overview" className="text-3xl font-bold tracking-tight mb-2 scroll-mt-20">Privacy Policy</h1>
-        <p className="text-sm text-muted-foreground mb-12">Last updated — July 31, 2026</p>
+      <main className="flex-1 max-w-3xl px-10 py-10 max-lg:px-6">
+        <div className="mb-12">
+          <h1
+            id="overview"
+            className="text-2xl font-bold tracking-tight mb-2 scroll-mt-16"
+          >
+            Privacy Policy
+          </h1>
+          <p className="text-[12px] text-muted-foreground/50">
+            Last updated — July 31, 2026
+          </p>
+        </div>
 
-        <p className="text-sm text-muted-foreground mb-8">
-          Beacon is a presence API for DisTalk. By being in a server where Beacon is active, your visible DisTalk presence data may be collected, cached, and exposed through the API.
+        <p className="text-[14px] text-muted-foreground/80 leading-relaxed mb-10">
+          Beacon is a presence API for DisTalk. By being in a server where
+          Beacon is active, your visible DisTalk presence data may be collected,
+          cached, and exposed through the API.
         </p>
 
-        <h2 id="what" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">What We Collect</h2>
-        <DataList
-          items={[
-            "User ID, username, and display name",
-            "Avatar and banner URLs",
-            "Presence status (online, idle, dnd, offline)",
-            "Mobile device state",
-            "Custom status text and emoji",
-            "Activity and now playing information",
-            "Spotify connection and track info",
-            "Public profile data (badges, bio, socials, server tag)",
-            "KV data explicitly set through Beacon",
-          ]}
-        />
+        <section className="mb-10">
+          <h2
+            id="what"
+            className="text-[15px] font-semibold mb-4 scroll-mt-16"
+          >
+            What We Collect
+          </h2>
+          <DataList
+            items={[
+              "User ID, username, and display name",
+              "Avatar and banner URLs",
+              "Presence status (online, idle, dnd, offline)",
+              "Mobile device state",
+              "Custom status text and emoji",
+              "Activity and now playing information",
+              "Spotify connection and track info",
+              "Public profile data (badges, bio, socials, server tag)",
+              "KV data explicitly set through Beacon",
+            ]}
+          />
+        </section>
 
-        <h2 id="how-collected" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">How It's Collected</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Beacon collects data through a connected account that shares a server with you. Only users visible to that account are tracked. No private messages or DMs are accessed.
-        </p>
+        <section className="mb-10">
+          <h2
+            id="how-collected"
+            className="text-[15px] font-semibold mb-3 scroll-mt-16"
+          >
+            How It's Collected
+          </h2>
+          <p className="text-[13px] text-muted-foreground/80 leading-relaxed">
+            Beacon collects data through a connected account that shares a server
+            with you. Only users visible to that account are tracked. No private
+            messages or DMs are accessed.
+          </p>
+        </section>
 
-        <h2 id="how-used" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">How It's Used</h2>
-        <DataList
-          items={[
-            "To provide real-time presence through the REST API and WebSocket",
-            "To support bot commands like /status and /profile",
-            "To store optional user-defined KV data",
-          ]}
-        />
+        <section className="mb-10">
+          <h2
+            id="how-used"
+            className="text-[15px] font-semibold mb-4 scroll-mt-16"
+          >
+            How It's Used
+          </h2>
+          <DataList
+            items={[
+              "To provide real-time presence through the REST API and WebSocket",
+              "To support bot commands like /status and /profile",
+              "To store optional user-defined KV data",
+            ]}
+          />
+        </section>
 
-        <h2 id="exposure" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">Public Exposure</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Data tracked by Beacon is publicly accessible through API endpoints. Anyone can query your presence status, badges, and profile data. Do not join a Beacon-tracked server if you do not want this data exposed.
-        </p>
+        <section className="mb-10">
+          <h2
+            id="exposure"
+            className="text-[15px] font-semibold mb-3 scroll-mt-16"
+          >
+            Public Exposure
+          </h2>
+          <p className="text-[13px] text-muted-foreground/80 leading-relaxed">
+            Data tracked by Beacon is publicly accessible through API endpoints.
+            Anyone can query your presence status, badges, and profile data. Do
+            not join a Beacon-tracked server if you do not want this data
+            exposed.
+          </p>
+        </section>
 
-        <h2 id="retention" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">Data Retention</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Presence data is held in memory and clears on restart. KV data and notes may persist to disk. If you leave the tracked server, your presence will no longer be updated but cached data may remain until the next restart.
-        </p>
+        <section className="mb-10">
+          <h2
+            id="retention"
+            className="text-[15px] font-semibold mb-3 scroll-mt-16"
+          >
+            Data Retention
+          </h2>
+          <p className="text-[13px] text-muted-foreground/80 leading-relaxed">
+            Presence data is held in memory and clears on restart. KV data and
+            notes may persist to disk. If you leave the tracked server, your
+            presence will no longer be updated but cached data may remain until
+            the next restart.
+          </p>
+        </section>
 
-        <h2 id="opting-out" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">Opting Out</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Leave the Beacon-tracked server. To request immediate removal of cached data, reach out through the DisTalk support server.
-        </p>
+        <section className="mb-10">
+          <h2
+            id="opting-out"
+            className="text-[15px] font-semibold mb-3 scroll-mt-16"
+          >
+            Opting Out
+          </h2>
+          <p className="text-[13px] text-muted-foreground/80 leading-relaxed">
+            Leave the Beacon-tracked server. To request immediate removal of
+            cached data, reach out through the DisTalk support server.
+          </p>
+        </section>
 
-        <h2 id="third-party" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">Third-Party Services</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Beacon runs on Railway. Standard access logging may apply. No data is sold or shared with third parties.
-        </p>
+        <section className="mb-10">
+          <h2
+            id="third-party"
+            className="text-[15px] font-semibold mb-3 scroll-mt-16"
+          >
+            Third-Party Services
+          </h2>
+          <p className="text-[13px] text-muted-foreground/80 leading-relaxed">
+            Beacon runs on Railway. Standard access logging may apply. No data is
+            sold or shared with third parties.
+          </p>
+        </section>
 
-        <h2 id="changes" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">Changes</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          This policy may be updated at any time. Changes will be reflected on this page with an updated date.
-        </p>
+        <section className="mb-10">
+          <h2
+            id="changes"
+            className="text-[15px] font-semibold mb-3 scroll-mt-16"
+          >
+            Changes
+          </h2>
+          <p className="text-[13px] text-muted-foreground/80 leading-relaxed">
+            This policy may be updated at any time. Changes will be reflected on
+            this page with an updated date.
+          </p>
+        </section>
 
-        <h2 id="contact" className="text-lg font-semibold mb-3 pt-8 border-t border-border mt-8 scroll-mt-20">Contact</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Join the Beacon support server on DisTalk for questions or data removal requests.
-        </p>
+        <section className="mb-10">
+          <h2
+            id="contact"
+            className="text-[15px] font-semibold mb-3 scroll-mt-16"
+          >
+            Contact
+          </h2>
+          <p className="text-[13px] text-muted-foreground/80 leading-relaxed">
+            Join the Beacon support server on DisTalk for questions or data
+            removal requests.
+          </p>
+        </section>
+
+        <footer className="pt-8 pb-4 border-t border-border/30 text-[11px] text-muted-foreground/30">
+          Beacon · DisTalk Presence API
+        </footer>
       </main>
     </div>
   );
