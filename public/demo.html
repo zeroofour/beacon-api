@@ -811,9 +811,11 @@
             ? `<img src="${u.avatar_url}" alt="" />`
             : initial;
           const roleBadge =
-            u.platform_role && u.platform_role !== "user"
-              ? `<span class="role-badge">${u.platform_role}</span>`
-              : "";
+            u.badges?.length
+              ? u.badges.map((b) => `<span class="role-badge">${b.name}</span>`).join("")
+              : u.platform_role && u.platform_role !== "user"
+                ? `<span class="role-badge">${u.platform_role}</span>`
+                : "";
           const mobileIcon = u.presence?.is_mobile
             ? `<span class="mobile-icon">📱</span>`
             : "";
