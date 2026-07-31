@@ -247,6 +247,7 @@ async function fetchMessages(since) {
 
 async function send(channelId, body, serverId) {
   try {
+    console.log(`[Bot] Sending to ${channelId} (${body.length} chars)`);
     const res = await fetch(`${BASE}/index.php?api=send_message`, {
       method: "POST",
       headers: {
@@ -262,7 +263,7 @@ async function send(channelId, body, serverId) {
     });
 
     const text = await res.text();
-    console.log(`[Bot] ${res.status}:`, text.substring(0, 100));
+    console.log(`[Bot] ${res.status}: ${text}`);
   } catch (e) {
     console.error("[Bot] Send error:", e.message);
   }
