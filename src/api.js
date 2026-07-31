@@ -10,7 +10,7 @@ const subscribers = new Map();
 function setupWebSocket(server) {
   wss = new WebSocket.Server({ server });
 
-  wss.on("connection", ws => {
+  wss.on("connection", (ws) => {
     let subscribedIds = new Set();
     let heartbeatTimer = null;
     let alive = true;
@@ -22,17 +22,24 @@ function setupWebSocket(server) {
       alive = false;
     }, 35000);
 
-    ws.on("message", raw => {
+    ws.on("message", (raw) => {
       let msg;
-      try { msg = JSON.parse(raw); } catch { return; }
+      try {
+        msg = JSON.parse(raw);
+      } catch {
+        return;
+      }
 
-      if (msg.op === 3) { alive = true; return; }
+      if (msg.op === 3) {
+        alive = true;
+        return;
+      }
 
       if (msg.op === 2) {
         const ids = msg.d?.subscribe_to_ids || msg.d?.subscribe_to_id;
         if (!ids) return;
         const idList = Array.isArray(ids) ? ids : [ids];
-        idList.forEach(id => {
+        idList.forEach((id) => {
           if (!id.startsWith("usr_")) id = "usr_" + id;
           subscribedIds.add(id);
           if (!subscribers.has(id)) subscribers.set(id, new Set());
@@ -51,7 +58,7 @@ function setupWebSocket(server) {
         const ids = msg.d?.subscribe_to_ids || msg.d?.subscribe_to_id;
         if (!ids) return;
         const idList = Array.isArray(ids) ? ids : [ids];
-        idList.forEach(id => {
+        idList.forEach((id) => {
           subscribedIds.delete(id);
           subscribers.get(id)?.delete(ws);
         });
@@ -60,18 +67,16 @@ function setupWebSocket(server) {
 
     ws.on("close", () => {
       clearInterval(heartbeatTimer);
-      subscribedIds.forEach(id => subscribers.get(id)?.delete(ws));
+      subscribedIds.forEach((id) => subscribers.get(id)?.delete(ws));
     });
   });
-
-  console.log("[WS API] WebSocket server ready");
 }
 
 function broadcastUpdate(userId, data) {
   const subs = subscribers.get(userId);
   if (!subs?.size) return;
   const msg = JSON.stringify({ op: 0, t: "PRESENCE_UPDATE", d: data });
-  subs.forEach(ws => {
+  subs.forEach((ws) => {
     if (ws.readyState === WebSocket.OPEN) ws.send(msg);
   });
 }
@@ -90,65 +95,141 @@ router.get("/", (req, res) => {
       "GET /v1/users/:id/kv/:key",
       "PUT /v1/users/:id/kv/:key",
       "DELETE /v1/users/:id/kv/:key",
-      "WSS /socket"
-    ]
+      "WSS /socket",
+    ],
   });
 });
 
 router.get("/docs", (req, res) => {
-  res.send(`
-<!DOCTYPE html>
+  res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Beacon API</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beacon — API Docs</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #0a0a0a; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px 20px; }
-    .container { max-width: 800px; margin: 0 auto; }
-    h1 { color: #fff; font-size: 32px; margin-bottom: 8px; }
-    .subtitle { color: #888; font-size: 16px; margin-bottom: 40px; }
-    .section { margin-bottom: 32px; }
-    .section h2 { color: #fff; font-size: 20px; margin-bottom: 16px; border-bottom: 1px solid #222; padding-bottom: 8px; }
-    .endpoint { background: #111; border: 1px solid #222; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
-    .method { padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-right: 8px; }
-    .method-get { background: #1a6334; color: #4ade80; }
-    .method-put { background: #854d0e; color: #fbbf24; }
-    .method-delete { background: #7f1d1d; color: #f87171; }
-    .method-ws { background: #1e3a5f; color: #60a5fa; }
-    .method-post { background: #4a1d96; color: #a78bfa; }
-    .path { color: #fff; font-family: monospace; font-size: 14px; }
-    .desc { color: #888; font-size: 13px; margin-top: 8px; }
-    .example { background: #0d0d0d; border: 1px solid #222; border-radius: 6px; padding: 12px; margin-top: 8px; font-family: monospace; font-size: 13px; color: #a78bfa; overflow-x: auto; }
-    .response { background: #0d0d0d; border: 1px solid #222; border-radius: 6px; padding: 12px; margin-top: 8px; font-family: monospace; font-size: 12px; color: #4ade80; white-space: pre; overflow-x: auto; }
-    .commands { margin-top: 16px; }
-    .cmd { display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px solid #1a1a1a; }
-    .cmd-name { color: #a78bfa; font-family: monospace; min-width: 180px; }
-    .cmd-desc { color: #888; }
-    .base-url { background: #111; border: 1px solid #222; border-radius: 8px; padding: 12px 16px; margin-bottom: 32px; font-family: monospace; color: #4ade80; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0a0a;
+      color: #d4d4d4;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 48px 20px;
+    }
+
+    .container { max-width: 780px; margin: 0 auto; }
+
+    header { margin-bottom: 48px; }
+    header h1 { font-size: 28px; font-weight: 600; color: #fff; letter-spacing: -0.5px; }
+    header p { color: #555; margin-top: 4px; font-size: 13px; }
+
+    .base-url {
+      display: inline-block;
+      background: #111;
+      border: 1px solid #1f1f1f;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-family: monospace;
+      font-size: 13px;
+      color: #a78bfa;
+      margin-top: 16px;
+    }
+
+    section { margin-bottom: 40px; }
+
+    section h2 {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #555;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #1a1a1a;
+    }
+
+    .endpoint {
+      background: #111;
+      border: 1px solid #1f1f1f;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+
+    .endpoint-title { display: flex; align-items: center; gap: 10px; }
+
+    .badge {
+      font-family: monospace;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .badge-get    { background: #0d2e1a; color: #4ade80; }
+    .badge-put    { background: #2e1e00; color: #fbbf24; }
+    .badge-delete { background: #2e0d0d; color: #f87171; }
+    .badge-post   { background: #1e0e40; color: #a78bfa; }
+    .badge-ws     { background: #0d1e38; color: #60a5fa; }
+
+    .path { font-family: monospace; font-size: 13px; color: #e2e2e2; }
+    .desc { color: #666; font-size: 12px; margin-top: 6px; }
+
+    pre {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #a78bfa;
+      overflow-x: auto;
+      margin-top: 10px;
+      white-space: pre;
+    }
+
+    pre.response { color: #4ade80; }
+    pre.code     { color: #d4d4d4; }
+
+    .cmd-table { width: 100%; border-collapse: collapse; }
+    .cmd-table tr { border-bottom: 1px solid #141414; }
+    .cmd-table tr:last-child { border-bottom: none; }
+    .cmd-table td { padding: 7px 0; font-size: 13px; vertical-align: top; }
+    .cmd-table td:first-child { font-family: monospace; color: #a78bfa; width: 220px; }
+    .cmd-table td:last-child { color: #555; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>beacon</h1>
-    <p class="subtitle">presence api for distalk</p>
-    <div class="base-url">https://api-beacon.up.railway.app</div>
+    <header>
+      <h1>Beacon</h1>
+      <p>Presence API for DisTalk</p>
+      <div class="base-url">https://api-beacon.up.railway.app</div>
+    </header>
 
-    <div class="section">
-      <h2>rest api</h2>
+    <section>
+      <h2>REST API</h2>
+
       <div class="endpoint">
-        <span class="method method-get">GET</span>
-        <span class="path">/v1/users</span>
-        <div class="desc">returns all tracked users. supports ?ids=id1,id2 for multiple specific users</div>
-        <div class="example">curl https://api-beacon.up.railway.app/v1/users</div>
+        <div class="endpoint-title">
+          <span class="badge badge-get">GET</span>
+          <span class="path">/v1/users</span>
+        </div>
+        <div class="desc">Returns all tracked users. Supports <code>?ids=id1,id2</code> to filter by ID.</div>
+        <pre>curl https://api-beacon.up.railway.app/v1/users</pre>
       </div>
+
       <div class="endpoint">
-        <span class="method method-get">GET</span>
-        <span class="path">/v1/users/:id</span>
-        <div class="desc">returns a specific user by id</div>
-        <div class="example">curl https://api-beacon.up.railway.app/v1/users/usr_8f7220facabf757f</div>
-        <div class="response">{
+        <div class="endpoint-title">
+          <span class="badge badge-get">GET</span>
+          <span class="path">/v1/users/:id</span>
+        </div>
+        <div class="desc">Returns a single user by ID.</div>
+        <pre>curl https://api-beacon.up.railway.app/v1/users/usr_8f7220facabf757f</pre>
+        <pre class="response">{
   "success": true,
   "data": {
     "id": "usr_8f7220facabf757f",
@@ -163,220 +244,335 @@ router.get("/docs", (req, res) => {
     "spotify": { "connected": false, "now_playing": null },
     "kv": {}
   }
-}</div>
+}</pre>
       </div>
-      <div class="endpoint">
-        <span class="method method-get">GET</span>
-        <span class="path">/v1/users/:id/presence</span>
-        <div class="desc">returns only presence data</div>
-        <div class="example">curl https://api-beacon.up.railway.app/v1/users/usr_8f7220facabf757f/presence</div>
-      </div>
-    </div>
 
-    <div class="section">
-      <h2>kv store</h2>
       <div class="endpoint">
-        <span class="method method-get">GET</span>
-        <span class="path">/v1/users/:id/kv</span>
-        <div class="desc">returns all kv pairs for a user</div>
+        <div class="endpoint-title">
+          <span class="badge badge-get">GET</span>
+          <span class="path">/v1/users/:id/presence</span>
+        </div>
+        <div class="desc">Returns only the presence object for a user.</div>
+        <pre>curl https://api-beacon.up.railway.app/v1/users/usr_8f7220facabf757f/presence</pre>
       </div>
-      <div class="endpoint">
-        <span class="method method-get">GET</span>
-        <span class="path">/v1/users/:id/kv/:key</span>
-        <div class="desc">returns a specific kv value</div>
-      </div>
-      <div class="endpoint">
-        <span class="method method-put">PUT</span>
-        <span class="path">/v1/users/:id/kv/:key</span>
-        <div class="desc">set a kv value (requires authorization header)</div>
-        <div class="example">curl -X PUT https://api-beacon.up.railway.app/v1/users/:id/kv/website -H "Authorization: your-api-key" -d '"https://example.com"'</div>
-      </div>
-      <div class="endpoint">
-        <span class="method method-delete">DELETE</span>
-        <span class="path">/v1/users/:id/kv/:key</span>
-        <div class="desc">delete a kv value (requires authorization header)</div>
-      </div>
-    </div>
+    </section>
 
-    <div class="section">
-      <h2>websocket</h2>
+    <section>
+      <h2>KV Store</h2>
+
       <div class="endpoint">
-        <span class="method method-ws">WSS</span>
-        <span class="path">wss://api-beacon.up.railway.app/socket</span>
-        <div class="desc">realtime presence updates</div>
-        <div class="response">const ws = new WebSocket("wss://api-beacon.up.railway.app/socket");
+        <div class="endpoint-title">
+          <span class="badge badge-get">GET</span>
+          <span class="path">/v1/users/:id/kv</span>
+        </div>
+        <div class="desc">Returns all KV pairs for a user.</div>
+      </div>
 
-// on connect you receive: { op: 1, d: { heartbeat_interval: 30000 } }
+      <div class="endpoint">
+        <div class="endpoint-title">
+          <span class="badge badge-get">GET</span>
+          <span class="path">/v1/users/:id/kv/:key</span>
+        </div>
+        <div class="desc">Returns a single KV value by key.</div>
+      </div>
 
-// subscribe to user(s)
+      <div class="endpoint">
+        <div class="endpoint-title">
+          <span class="badge badge-put">PUT</span>
+          <span class="path">/v1/users/:id/kv/:key</span>
+        </div>
+        <div class="desc">Sets a KV value. Requires an <code>Authorization</code> header.</div>
+        <pre>curl -X PUT https://api-beacon.up.railway.app/v1/users/:id/kv/website \\
+  -H "Authorization: your-api-key" \\
+  -d '"https://example.com"'</pre>
+      </div>
+
+      <div class="endpoint">
+        <div class="endpoint-title">
+          <span class="badge badge-delete">DELETE</span>
+          <span class="path">/v1/users/:id/kv/:key</span>
+        </div>
+        <div class="desc">Deletes a KV value. Requires an <code>Authorization</code> header.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>WebSocket</h2>
+
+      <div class="endpoint">
+        <div class="endpoint-title">
+          <span class="badge badge-ws">WSS</span>
+          <span class="path">wss://api-beacon.up.railway.app/socket</span>
+        </div>
+        <div class="desc">Real-time presence updates over WebSocket.</div>
+        <pre class="code">const ws = new WebSocket("wss://api-beacon.up.railway.app/socket");
+
+// On connect, you receive:
+// { op: 1, d: { heartbeat_interval: 30000 } }
+
+// Subscribe to one or more users
 ws.send(JSON.stringify({
   op: 2,
   d: { subscribe_to_ids: ["usr_8f7220facabf757f"] }
 }));
 
-// you receive INIT_STATE then PRESENCE_UPDATE on changes
+// You receive INIT_STATE immediately, then PRESENCE_UPDATE on changes
 
-// send heartbeat every 30s
-setInterval(() => ws.send(JSON.stringify({ op: 3 })), 30000);</div>
+// Send a heartbeat every 30s
+setInterval(() => ws.send(JSON.stringify({ op: 3 })), 30000);</pre>
       </div>
-    </div>
+    </section>
 
-    <div class="section">
-      <h2>webhooks</h2>
+    <section>
+      <h2>Webhooks</h2>
+
       <div class="endpoint">
-        <span class="method method-post">POST</span>
-        <span class="path">/github</span>
-        <div class="desc">github webhook endpoint - posts updates to distalk</div>
+        <div class="endpoint-title">
+          <span class="badge badge-post">POST</span>
+          <span class="path">/github</span>
+        </div>
+        <div class="desc">GitHub webhook endpoint. Posts push, PR, issue, and release events to DisTalk.</div>
       </div>
-    </div>
+    </section>
 
-    <div class="section">
-      <h2>usage</h2>
+    <section>
+      <h2>Usage Examples</h2>
+
       <div class="endpoint">
-        <div class="desc">javascript</div>
-        <div class="response">const res = await fetch("https://api-beacon.up.railway.app/v1/users/usr_8f7220facabf757f");
+        <div class="desc">JavaScript</div>
+        <pre class="code">const res = await fetch("https://api-beacon.up.railway.app/v1/users/usr_8f7220facabf757f");
 const { data } = await res.json();
-console.log(data.presence.status);</div>
+console.log(data.presence.status);</pre>
       </div>
+
       <div class="endpoint">
-        <div class="desc">python</div>
-        <div class="response">import requests
+        <div class="desc">Python</div>
+        <pre class="code">import requests
 res = requests.get("https://api-beacon.up.railway.app/v1/users/usr_8f7220facabf757f")
-print(res.json()["data"]["presence"]["status"])</div>
+print(res.json()["data"]["presence"]["status"])</pre>
       </div>
+
       <div class="endpoint">
-        <div class="desc">websocket</div>
-        <div class="response">const ws = new WebSocket("wss://api-beacon.up.railway.app/socket");
+        <div class="desc">WebSocket</div>
+        <pre class="code">const ws = new WebSocket("wss://api-beacon.up.railway.app/socket");
 ws.onmessage = (e) => {
   const msg = JSON.parse(e.data);
   if (msg.t === "PRESENCE_UPDATE") {
     console.log(msg.d.presence.status);
   }
-};</div>
+};</pre>
       </div>
-    </div>
+    </section>
 
-    <div class="section">
-      <h2>chat commands</h2>
-      <p class="desc" style="margin-bottom: 16px;">type these in any distalk channel where beacon is present</p>
-      <div class="commands">
-        <div class="cmd"><span class="cmd-name">/status &lt;user&gt;</span><span class="cmd-desc">current status</span></div>
-        <div class="cmd"><span class="cmd-name">/profile &lt;user&gt;</span><span class="cmd-desc">full profile</span></div>
-        <div class="cmd"><span class="cmd-name">/userid &lt;user&gt;</span><span class="cmd-desc">get user id</span></div>
-        <div class="cmd"><span class="cmd-name">/whois &lt;id&gt;</span><span class="cmd-desc">id to username</span></div>
-        <div class="cmd"><span class="cmd-name">/avatar &lt;user&gt;</span><span class="cmd-desc">avatar url</span></div>
-        <div class="cmd"><span class="cmd-name">/badges &lt;user&gt;</span><span class="cmd-desc">list badges</span></div>
-        <div class="cmd"><span class="cmd-name">/bio &lt;user&gt;</span><span class="cmd-desc">user bio</span></div>
-        <div class="cmd"><span class="cmd-name">/socials &lt;user&gt;</span><span class="cmd-desc">social links</span></div>
-        <div class="cmd"><span class="cmd-name">/tag &lt;user&gt;</span><span class="cmd-desc">server tag</span></div>
-        <div class="cmd"><span class="cmd-name">/spotify &lt;user&gt;</span><span class="cmd-desc">now playing</span></div>
-        <div class="cmd"><span class="cmd-name">/compare &lt;a&gt; &lt;b&gt;</span><span class="cmd-desc">compare users</span></div>
-        <div class="cmd"><span class="cmd-name">/online</span><span class="cmd-desc">online users</span></div>
-        <div class="cmd"><span class="cmd-name">/offline</span><span class="cmd-desc">recently offline</span></div>
-        <div class="cmd"><span class="cmd-name">/mobile</span><span class="cmd-desc">mobile users</span></div>
-        <div class="cmd"><span class="cmd-name">/role &lt;role&gt;</span><span class="cmd-desc">users by role</span></div>
-        <div class="cmd"><span class="cmd-name">/search &lt;query&gt;</span><span class="cmd-desc">search users</span></div>
-        <div class="cmd"><span class="cmd-name">/random</span><span class="cmd-desc">random user</span></div>
-        <div class="cmd"><span class="cmd-name">/api &lt;user&gt;</span><span class="cmd-desc">raw json</span></div>
-        <div class="cmd"><span class="cmd-name">/set &lt;key&gt; &lt;value&gt;</span><span class="cmd-desc">store a value</span></div>
-        <div class="cmd"><span class="cmd-name">/get &lt;key&gt;</span><span class="cmd-desc">retrieve a value</span></div>
-        <div class="cmd"><span class="cmd-name">/del &lt;key&gt;</span><span class="cmd-desc">delete a key</span></div>
-        <div class="cmd"><span class="cmd-name">/keys</span><span class="cmd-desc">list stored keys</span></div>
-        <div class="cmd"><span class="cmd-name">/note &lt;user&gt; &lt;text&gt;</span><span class="cmd-desc">add note</span></div>
-        <div class="cmd"><span class="cmd-name">/notes &lt;user&gt;</span><span class="cmd-desc">view notes</span></div>
-        <div class="cmd"><span class="cmd-name">/server</span><span class="cmd-desc">server info</span></div>
-        <div class="cmd"><span class="cmd-name">/stats</span><span class="cmd-desc">bot statistics</span></div>
-        <div class="cmd"><span class="cmd-name">/count</span><span class="cmd-desc">tracked users</span></div>
-        <div class="cmd"><span class="cmd-name">/uptime</span><span class="cmd-desc">bot uptime</span></div>
-        <div class="cmd"><span class="cmd-name">/ping</span><span class="cmd-desc">latency</span></div>
-        <div class="cmd"><span class="cmd-name">/docs</span><span class="cmd-desc">api documentation</span></div>
-        <div class="cmd"><span class="cmd-name">/privacy</span><span class="cmd-desc">privacy policy</span></div>
-      </div>
-    </div>
+    <section>
+      <h2>Chat Commands</h2>
+      <p style="color:#555; font-size:12px; margin-bottom:14px;">Available in any DisTalk channel where Beacon is present.</p>
+      <table class="cmd-table">
+        <tbody>
+          <tr><td>/status &lt;user&gt;</td><td>Current status</td></tr>
+          <tr><td>/profile &lt;user&gt;</td><td>Full profile</td></tr>
+          <tr><td>/userid &lt;user&gt;</td><td>Get user ID</td></tr>
+          <tr><td>/whois &lt;id&gt;</td><td>Resolve ID to username</td></tr>
+          <tr><td>/avatar &lt;user&gt;</td><td>Avatar URL</td></tr>
+          <tr><td>/badges &lt;user&gt;</td><td>List badges</td></tr>
+          <tr><td>/bio &lt;user&gt;</td><td>User bio</td></tr>
+          <tr><td>/socials &lt;user&gt;</td><td>Social links</td></tr>
+          <tr><td>/tag &lt;user&gt;</td><td>Server tag</td></tr>
+          <tr><td>/spotify &lt;user&gt;</td><td>Now playing</td></tr>
+          <tr><td>/compare &lt;a&gt; &lt;b&gt;</td><td>Compare two users</td></tr>
+          <tr><td>/online</td><td>Online users</td></tr>
+          <tr><td>/offline</td><td>Recently offline</td></tr>
+          <tr><td>/mobile</td><td>Mobile users</td></tr>
+          <tr><td>/role &lt;role&gt;</td><td>Users by role</td></tr>
+          <tr><td>/search &lt;query&gt;</td><td>Search users</td></tr>
+          <tr><td>/random</td><td>Random user</td></tr>
+          <tr><td>/api &lt;user&gt;</td><td>Raw JSON</td></tr>
+          <tr><td>/set &lt;key&gt; &lt;value&gt;</td><td>Store a value</td></tr>
+          <tr><td>/get &lt;key&gt;</td><td>Retrieve a value</td></tr>
+          <tr><td>/del &lt;key&gt;</td><td>Delete a key</td></tr>
+          <tr><td>/keys</td><td>List stored keys</td></tr>
+          <tr><td>/note &lt;user&gt; &lt;text&gt;</td><td>Add a note</td></tr>
+          <tr><td>/notes &lt;user&gt;</td><td>View notes</td></tr>
+          <tr><td>/server</td><td>Server info</td></tr>
+          <tr><td>/stats</td><td>Bot statistics</td></tr>
+          <tr><td>/count</td><td>Tracked user count</td></tr>
+          <tr><td>/uptime</td><td>Bot uptime</td></tr>
+          <tr><td>/ping</td><td>Latency</td></tr>
+          <tr><td>/docs</td><td>API documentation</td></tr>
+          <tr><td>/privacy</td><td>Privacy policy</td></tr>
+        </tbody>
+      </table>
+    </section>
   </div>
 </body>
-</html>
-  `);
+</html>`);
 });
 
 router.get("/privacy", (req, res) => {
-  res.send(`
-<!DOCTYPE html>
+  res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Beacon Privacy Policy</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beacon — Privacy Policy</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #0a0a0a; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 40px 20px; line-height: 1.6; }
-    .container { max-width: 800px; margin: 0 auto; }
-    h1 { color: #fff; font-size: 32px; margin-bottom: 8px; }
-    .subtitle { color: #888; margin-bottom: 32px; }
-    h2 { color: #fff; font-size: 20px; margin-top: 32px; margin-bottom: 12px; border-bottom: 1px solid #222; padding-bottom: 8px; }
-    p, li { color: #cfcfcf; }
-    ul { margin-left: 20px; }
-    code { background: #111; border: 1px solid #222; border-radius: 6px; padding: 2px 6px; color: #a78bfa; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0a0a;
+      color: #d4d4d4;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.7;
+      padding: 48px 20px;
+    }
+
+    .container { max-width: 680px; margin: 0 auto; }
+
+    header { margin-bottom: 48px; }
+    header h1 { font-size: 28px; font-weight: 600; color: #fff; letter-spacing: -0.5px; }
+    header p { color: #555; margin-top: 4px; font-size: 13px; }
+
+    section { margin-bottom: 36px; }
+
+    section h2 {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #555;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #1a1a1a;
+    }
+
+    p { color: #999; margin-bottom: 8px; }
+
+    ul {
+      list-style: none;
+      background: #111;
+      border: 1px solid #1f1f1f;
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+
+    ul li {
+      color: #999;
+      padding: 4px 0;
+      border-bottom: 1px solid #161616;
+      font-size: 13px;
+    }
+
+    ul li:last-child { border-bottom: none; }
+
+    ul li::before {
+      content: "–";
+      color: #333;
+      margin-right: 10px;
+    }
+
+    code {
+      background: #111;
+      border: 1px solid #1f1f1f;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #a78bfa;
+    }
+
     a { color: #a78bfa; text-decoration: none; }
     a:hover { text-decoration: underline; }
-    .box { background: #111; border: 1px solid #222; border-radius: 8px; padding: 16px; margin-top: 12px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>privacy policy</h1>
-    <p class="subtitle">last updated: 2026-07-30</p>
+    <header>
+      <h1>Privacy Policy</h1>
+      <p>Beacon &mdash; Last updated July 30, 2026</p>
+    </header>
 
-    <p>Beacon is a presence API for DisTalk. By joining a server where Beacon is present, your visible DisTalk presence may be collected, cached, and exposed through the API.</p>
+    <section>
+      <h2>Overview</h2>
+      <p>
+        Beacon is a presence API for DisTalk. By being in a server where Beacon is active,
+        your visible DisTalk presence data may be collected, cached, and exposed through the API.
+      </p>
+    </section>
 
-    <h2>what we collect</h2>
-    <div class="box">
+    <section>
+      <h2>What We Collect</h2>
       <ul>
-        <li>user id, username, display name</li>
-        <li>avatar and banner urls</li>
-        <li>presence status (online, idle, dnd, offline)</li>
-        <li>mobile state</li>
-        <li>custom status text and emoji</li>
-        <li>activity and now playing info</li>
-        <li>spotify connection and track info</li>
-        <li>public profile data (badges, bio, socials, tags)</li>
-        <li>kv data explicitly added through beacon</li>
+        <li>User ID, username, and display name</li>
+        <li>Avatar and banner URLs</li>
+        <li>Presence status (online, idle, dnd, offline)</li>
+        <li>Mobile device state</li>
+        <li>Custom status text and emoji</li>
+        <li>Activity and now playing information</li>
+        <li>Spotify connection and track info</li>
+        <li>Public profile data (badges, bio, socials, server tag)</li>
+        <li>KV data explicitly set through Beacon</li>
       </ul>
-    </div>
+    </section>
 
-    <h2>how data is collected</h2>
-    <p>Beacon collects data through a connected account that shares a server with you. Only users visible to that account are tracked.</p>
+    <section>
+      <h2>How It's Collected</h2>
+      <p>
+        Beacon collects data through a connected account that shares a server with you.
+        Only users visible to that account are tracked.
+      </p>
+    </section>
 
-    <h2>how data is used</h2>
-    <div class="box">
+    <section>
+      <h2>How It's Used</h2>
       <ul>
-        <li>to provide realtime presence through the API and websocket</li>
-        <li>to support bot commands like <code>/status</code> and <code>/profile</code></li>
-        <li>to store optional user-defined kv data</li>
+        <li>To provide real-time presence through the API and WebSocket</li>
+        <li>To support bot commands like <code>/status</code> and <code>/profile</code></li>
+        <li>To store optional user-defined KV data</li>
       </ul>
-    </div>
+    </section>
 
-    <h2>public exposure</h2>
-    <p>Data tracked by Beacon is publicly accessible through API endpoints. Do not join a Beacon-tracked server if you do not want your presence exposed.</p>
+    <section>
+      <h2>Public Exposure</h2>
+      <p>
+        Data tracked by Beacon is publicly accessible through API endpoints.
+        Do not join a Beacon-tracked server if you do not want your presence exposed.
+      </p>
+    </section>
 
-    <h2>data retention</h2>
-    <p>Presence data is cached in memory. KV data and notes may persist to disk. If you leave the tracked server, your presence will no longer be updated.</p>
+    <section>
+      <h2>Data Retention</h2>
+      <p>
+        Presence data is held in memory and clears on restart. KV data and notes may persist to disk.
+        If you leave the tracked server, your presence will no longer be updated.
+      </p>
+    </section>
 
-    <h2>opting out</h2>
-    <p>Leave the Beacon-tracked server. For cached data removal, contact through the support server.</p>
+    <section>
+      <h2>Opting Out</h2>
+      <p>
+        Leave the Beacon-tracked server. To request removal of cached data,
+        reach out through the DisTalk support server.
+      </p>
+    </section>
 
-    <h2>third-party services</h2>
-    <p>Beacon uses hosting infrastructure where standard logging may apply.</p>
+    <section>
+      <h2>Third-Party Services</h2>
+      <p>Beacon runs on third-party hosting infrastructure where standard access logging may apply.</p>
+    </section>
 
-    <h2>changes</h2>
-    <p>This policy may change. Updates will be reflected on this page.</p>
+    <section>
+      <h2>Changes</h2>
+      <p>This policy may be updated at any time. Changes will be reflected on this page.</p>
+    </section>
 
-    <h2>contact</h2>
-    <p>Support: join the Beacon support server on DisTalk</p>
+    <section>
+      <h2>Contact</h2>
+      <p>Join the Beacon support server on DisTalk.</p>
+    </section>
   </div>
 </body>
-</html>
-  `);
+</html>`);
 });
 
 router.get("/v1/users", (req, res) => {
@@ -384,13 +580,15 @@ router.get("/v1/users", (req, res) => {
   let users = store.values();
 
   if (ids) {
-    users = ids.map(id => {
-      if (!id.startsWith("usr_")) id = "usr_" + id;
-      return store.get(id);
-    }).filter(Boolean);
+    users = ids
+      .map((id) => {
+        if (!id.startsWith("usr_")) id = "usr_" + id;
+        return store.get(id);
+      })
+      .filter(Boolean);
   }
 
-  const clean = users.map(u => {
+  const clean = users.map((u) => {
     const { _ts, ...rest } = u;
     rest.kv = getUserKV(rest.id);
     return rest;
@@ -439,7 +637,9 @@ router.put("/v1/users/:id/kv/:key", express.text({ type: "*/*" }), (req, res) =>
   let id = req.params.id;
   if (!id.startsWith("usr_")) id = "usr_" + id;
   let value = req.body;
-  try { value = JSON.parse(value); } catch {}
+  try {
+    value = JSON.parse(value);
+  } catch {}
   kv.set(`kv:${id}:${req.params.key}`, value);
   res.json({ success: true });
 });
@@ -457,9 +657,8 @@ router.delete("/v1/users/:id/kv/:key", (req, res) => {
 
 function getUserKV(userId) {
   const prefix = `kv:${userId}:`;
-  const allKeys = kv.keys();
   const result = {};
-  allKeys.forEach(k => {
+  kv.keys().forEach((k) => {
     if (k.startsWith(prefix)) result[k.replace(prefix, "")] = kv.get(k);
   });
   return result;
