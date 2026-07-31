@@ -106,39 +106,6 @@ async function handleCommand(msg) {
   commandsRun++;
 
   switch (cmd) {
-<<<<<<< HEAD
-    case "/status": return cmdStatus(argsLower, reply);
-    case "/online": return cmdOnline(reply);
-    case "/profile": return cmdProfile(argsLower, reply);
-    case "/search": return cmdSearch(argsLower, reply);
-    case "/api": return cmdApi(argsLower, reply);
-    case "/userid": return cmdUserId(argsLower, reply);
-    case "/avatar": return cmdAvatar(argsLower, reply);
-    case "/badges": return cmdBadges(argsLower, reply);
-    case "/spotify": return cmdSpotify(argsLower, reply);
-    case "/server": return cmdServer(msg, reply);
-    case "/uptime": return cmdUptime(reply);
-    case "/ping": return cmdPing(msg, reply);
-    case "/count": return cmdCount(reply);
-    case "/socials": return cmdSocials(argsLower, reply);
-    case "/tag": return cmdTag(argsLower, reply);
-    case "/compare": return cmdCompare(argsLower, reply);
-    case "/random": return cmdRandom(reply);
-    case "/mobile": return cmdMobile(reply);
-    case "/offline": return cmdOffline(reply);
-    case "/role": return cmdRole(argsLower, reply);
-    case "/bio": return cmdBio(argsLower, reply);
-    case "/whois": return cmdWhois(argsLower, reply);
-    case "/stats": return cmdStats(reply);
-    case "/help": return cmdHelp(reply);
-    case "/set": return cmdSet(args, msg, reply);
-    case "/get": return cmdGet(argsLower, reply);
-    case "/del": return cmdDel(argsLower, msg, reply);
-    case "/keys": return cmdKeys(reply);
-    case "/note": return cmdNote(args, msg, reply);
-    case "/notes": return cmdNotes(argsLower, reply);
-    default: return;
-=======
     case "/status":   return cmdStatus(argsLower, reply);
     case "/online":   return cmdOnline(reply);
     case "/profile":  return cmdProfile(argsLower, reply);
@@ -174,7 +141,6 @@ async function handleCommand(msg) {
     case "/privacy":  return cmdPrivacy(reply);
     case "/who":      return cmdWho(argsLower, msg, reply);
     default:          return;
->>>>>>> 7e5f0d1
   }
 }
 
@@ -563,41 +529,6 @@ async function cmdCount(reply) {
   return reply(`\`tracking ${store.count()} users\``);
 }
 
-<<<<<<< HEAD
-async function cmdHelp(reply) {
-  return reply(
-    "`/status <user>`  current status\n" +
-    "`/profile <user>`  full profile\n" +
-    "`/userid <user>`  get user id\n" +
-    "`/whois <id>`  id to username\n" +
-    "`/avatar <user>`  avatar url\n" +
-    "`/badges <user>`  list badges\n" +
-    "`/bio <user>`  user bio\n" +
-    "`/socials <user>`  social links\n" +
-    "`/tag <user>`  server tag\n" +
-    "`/spotify <user>`  now playing\n" +
-    "`/compare <a> <b>`  compare users\n" +
-    "`/online`  online users\n" +
-    "`/offline`  recently offline\n" +
-    "`/mobile`  mobile users\n" +
-    "`/role <role>`  users by role\n" +
-    "`/search <query>`  search users\n" +
-    "`/random`  random user\n" +
-    "`/api <user>`  raw json\n" +
-    "`/set <key> <value>`  store a value\n" +
-    "`/get <key>`  retrieve a value\n" +
-    "`/del <key>`  delete a key\n" +
-    "`/keys`  list all stored keys\n" +
-    "`/note <user> <text>`  add note\n" +
-    "`/notes <user>`  view notes\n" +
-    "`/server`  server info\n" +
-    "`/stats`  bot statistics\n" +
-    "`/count`  tracked users\n" +
-    "`/uptime`  bot uptime\n" +
-    "`/ping`  latency\n" +
-    "`/help`  this message"
-  );
-=======
 async function cmdDocs(reply) {
   return reply("`beacon api docs`\n\nhttps://api-beacon.up.railway.app/docs");
 }
@@ -673,7 +604,6 @@ function listenToAllChannels(channels = [], serverIds = []) {
   console.log(`[Bot] Subscribing to ${serverIds.length} servers, ${channels.length} channels`);
   serverIds.forEach((id) => sub(`srv-${id}`));
   channels.forEach((ch) => sub(`chn-${ch}`));
->>>>>>> 7e5f0d1
 }
 
 function findUser(query) {
@@ -717,90 +647,4 @@ function formatUptime(ms) {
   return t;
 }
 
-<<<<<<< HEAD
-function listenToAllChannels(channels = [], serverIds = []) {
-  console.log(`[Bot] Subscribing to ${serverIds.length} servers + ${channels.length} channels`);
-  serverIds.forEach(id => sub(`srv-${id}`));
-  channels.forEach(ch => sub(`chn-${ch}`));
-}
-
-async function cmdSet(input, msg, reply) {
-  const space = input.indexOf(" ");
-  if (space === -1) return reply("`usage: /set <key> <value>`");
-
-  const key = input.substring(0, space).trim();
-  const value = input.substring(space + 1).trim();
-
-  kv.set(key, value);
-  return reply(`\`${key} = ${value}\``);
-}
-
-async function cmdGet(key, reply) {
-  if (!key) return reply("`usage: /get <key>`");
-
-  const value = kv.get(key);
-  if (value === null) return reply(`\`key "${key}" not found\``);
-
-  return reply(`\`${key} = ${value}\``);
-}
-
-async function cmdDel(key, msg, reply) {
-  if (!key) return reply("`usage: /del <key>`");
-  if (msg.user_id !== "usr_8f7220facabf757f") return reply("`only the owner can delete keys`");
-
-  kv.del(key);
-  return reply(`\`deleted "${key}"\``);
-}
-
-async function cmdKeys(reply) {
-  const k = kv.keys();
-  if (!k.length) return reply("`no keys stored`");
-
-  let t = `\`stored keys (${k.length})\`\n\n`;
-  k.forEach(key => t += `\`• ${key} = ${kv.get(key)}\`\n`);
-
-  return reply(t);
-}
-
-async function cmdNote(input, msg, reply) {
-  const space = input.indexOf(" ");
-  if (space === -1) return reply("`usage: /note <user> <text>`");
-
-  const username = input.substring(0, space).trim().toLowerCase();
-  const text = input.substring(space + 1).trim();
-
-  const user = findUser(username);
-  if (!user) return reply(`\`user "${username}" not found\``);
-
-  const key = `note:${user.id}`;
-  const existing = kv.get(key) || [];
-  existing.push({
-    text,
-    by: msg.user_id,
-    at: new Date().toISOString()
-  });
-  kv.set(key, existing);
-
-  return reply(`\`note added for ${user.display_name} (${existing.length} total)\``);
-}
-
-async function cmdNotes(query, reply) {
-  if (!query) return reply("`usage: /notes <user>`");
-
-  const user = findUser(query);
-  if (!user) return reply(`\`user "${query}" not found\``);
-
-  const notes = kv.get(`note:${user.id}`);
-  if (!notes?.length) return reply(`\`no notes for ${user.display_name}\``);
-
-  let t = `\`notes for ${user.display_name} (${notes.length})\`\n\n`;
-  notes.forEach((n, i) => {
-    t += `\`${i + 1}. ${n.text}\`\n`;
-  });
-
-  return reply(t);
-}
-
-=======
->>>>>>> 7e5f0d1
 module.exports = { initPusher, listenToAllChannels };
