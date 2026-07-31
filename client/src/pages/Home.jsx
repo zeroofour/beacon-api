@@ -1,21 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchUsers, fetchUser, connectWebSocket } from "../lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Search,
-  Wifi,
-  WifiOff,
   User,
   Smartphone,
   Music,
-  ChevronRight,
-  Terminal,
   X,
+  ChevronDown,
+  Terminal,
+  ArrowUpRight,
 } from "lucide-react";
 
 const STATUS_BG = {
@@ -32,80 +27,33 @@ const STATUS_TEXT = {
   offline: "text-zinc-500",
 };
 
-const FILTERS = ["all", "online", "idle", "dnd", "offline"];
+const SORT_OPTIONS = [
+  { value: "status", label: "Status" },
+  { value: "name", label: "Name" },
+  { value: "role", label: "Role" },
+];
 
 function Skeleton({ className = "" }) {
-  return <div className={`animate-pulse rounded-md bg-muted/60 ${className}`} />;
-}
-
-function UserSkeleton() {
-  return (
-    <div className="flex items-center gap-3.5 px-5 py-3 border-b border-border/40 last:border-0">
-      <Skeleton className="h-9 w-9 rounded-full shrink-0" />
-      <div className="flex-1 space-y-1.5">
-        <Skeleton className="h-3 w-28" />
-        <Skeleton className="h-2.5 w-44" />
-      </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value, color, delay = 0, loading }) {
-  if (loading) {
-    return (
-      <Card className="border-border/40">
-        <CardContent className="p-4">
-          <Skeleton className="h-2.5 w-10 mb-2.5" />
-          <Skeleton className="h-6 w-8" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.2 }}
-    >
-      <Card className="border-border/40 transition-colors hover:border-border/60">
-        <CardContent className="p-4">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-            {label}
-          </p>
-          <p className={`text-2xl font-semibold tracking-tight mt-1 tabular-nums ${color || ""}`}>
-            {value}
-          </p>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-}
-
-function DetailField({ label, children, full = false }) {
-  return (
-    <div className={`p-4 ${full ? "col-span-full" : ""}`}>
-      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-        {label}
-      </p>
-      <div className="text-sm">{children}</div>
-    </div>
-  );
+  return <div className={`animate-pulse rounded-md bg-muted/40 ${className}`} />;
 }
 
 export default function Home() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [sort, setSort] = useState("status");
+  const [sortOpen, setSortOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
-  const [connected, setConnected] = useState(false);
   const [events, setEvents] = useState([]);
+  const [showLog, setShowLog] = useState(false);
   const initialized = useRef(false);
+  const sortRef = useRef(null);
+  const logEndRef = useRef(null);
 
   const addEvent = useCallback((type, data) => {
     const time = new Date().toLocaleTimeString("en-US", { hour12: false });
-    setEvents((prev) => [{ time, type, data }, ...prev].slice(0, 50));
+    setEvents((prev) => [{ time, type, data }, ...prev].slice(0, 100));
   }, []);
 
   useEffect(() => {
@@ -123,7 +71,6 @@ export default function Home() {
 
     const socket = connectWebSocket((msg) => {
       if (msg.type === "connection") {
-        setConnected(msg.connected);
         addEvent(msg.connected ? "CONNECTED" : "DISCONNECTED", "");
         return;
       }
@@ -133,11 +80,10 @@ export default function Home() {
           if (ids.length) socket.subscribe(ids);
           return prev;
         });
-        addEvent("SUBSCRIBE", "subscribed");
         return;
       }
       if (msg.type === "init") {
-        addEvent("INIT_STATE", msg.data?.display_name || msg.data?.id);
+        addEvent("INIT", msg.data?.display_name || msg.data?.id);
         return;
       }
       if (msg.type === "presence") {
@@ -152,15 +98,22 @@ export default function Home() {
           }
           return [...prev, d];
         });
-        addEvent(
-          "PRESENCE_UPDATE",
-          `${d.display_name || d.id} → ${d.presence?.status}`
-        );
+        addEvent("UPDATE", `${d.display_name || d.id} → ${d.presence?.status}`);
       }
     });
 
     return () => socket.close();
   }, [addEvent]);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (sortRef.current && !sortRef.current.contains(e.target)) {
+        setSortOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const filtered = users
     .filter((u) => {
@@ -176,6 +129,14 @@ export default function Home() {
       return true;
     })
     .sort((a, b) => {
+      if (sort === "name") {
+        return (a.display_name || a.username || "").localeCompare(
+          b.display_name || b.username || ""
+        );
+      }
+      if (sort === "role") {
+        return (a.platform_role || "").localeCompare(b.platform_role || "");
+      }
       const o = { online: 0, idle: 1, dnd: 2, offline: 3 };
       return (o[a.presence?.status] ?? 3) - (o[b.presence?.status] ?? 3);
     });
@@ -211,331 +172,378 @@ export default function Home() {
     ? [...(selected.badges || []), ...(selected.self_badges || [])]
     : [];
 
-  return (
-    <div className="max-w-5xl mx-auto px-6 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-          {connected ? (
-            <Wifi className="h-3 w-3 text-green-500" />
-          ) : (
-            <WifiOff className="h-3 w-3" />
-          )}
-          <span>{connected ? "connected" : "reconnecting..."}</span>
-        </div>
-      </div>
+  const FILTERS = [
+    { key: "all", label: "All", count: counts.total },
+    { key: "online", label: "Online", count: counts.online },
+    { key: "idle", label: "Idle", count: counts.idle },
+    { key: "dnd", label: "DND", count: counts.dnd },
+    { key: "offline", label: "Offline", count: counts.total - counts.online - counts.idle - counts.dnd },
+  ];
 
-      <div className="flex gap-2 mb-5">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-          <Input
-            placeholder="Search by username or ID..."
+  return (
+    <div className="max-w-6xl mx-auto flex gap-0 min-h-[calc(100vh-3rem)]">
+      <div className="flex-1 max-w-4xl border-r border-border/30 px-6 py-6">
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search users..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="h-9 text-sm pl-9 border-border/40 focus:border-border transition-colors duration-150"
+            className="w-full h-10 bg-transparent border border-border/40 rounded-xl pl-10 pr-4 text-[13px] text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-border/70 transition-colors duration-150"
           />
         </div>
-        <Button
-          size="sm"
-          className="h-9 px-4 transition-all duration-150 active:scale-[0.97]"
-          onClick={handleSearch}
-        >
-          Look up
-        </Button>
-      </div>
 
-      <div className="grid grid-cols-4 gap-2.5 mb-5 max-sm:grid-cols-2">
-        <StatCard label="Total" value={counts.total} loading={loading} delay={0} />
-        <StatCard label="Online" value={counts.online} color="text-green-500" loading={loading} delay={0.03} />
-        <StatCard label="Idle" value={counts.idle} color="text-yellow-500" loading={loading} delay={0.06} />
-        <StatCard label="DND" value={counts.dnd} color="text-red-500" loading={loading} delay={0.09} />
-      </div>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-1">
+            {FILTERS.map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className={`relative flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg transition-colors duration-150 ${
+                  filter === f.key
+                    ? "text-foreground"
+                    : "text-muted-foreground/60 hover:text-muted-foreground"
+                }`}
+              >
+                {filter === f.key && (
+                  <motion.div
+                    layoutId="home-filter"
+                    className="absolute inset-0 bg-muted/50 rounded-lg border border-border/30"
+                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  />
+                )}
+                <span className="relative z-10">{f.label}</span>
+                <span className="relative z-10 text-[10px] tabular-nums opacity-60">
+                  {f.count}
+                </span>
+              </button>
+            ))}
+          </div>
 
-      <div className="flex gap-0.5 p-0.5 bg-muted/40 rounded-lg w-fit mb-5 border border-border/30">
-        {FILTERS.map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`relative px-3.5 py-1 text-xs font-medium rounded-md transition-colors duration-150 capitalize ${
-              filter === f
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {filter === f && (
-              <motion.div
-                layoutId="filter-pill"
-                className="absolute inset-0 bg-background shadow-sm rounded-md border border-border/40"
-                transition={{ type: "spring", stiffness: 500, damping: 35 }}
-              />
-            )}
-            <span className="relative z-10">{f}</span>
-          </button>
-        ))}
-      </div>
-
-      <Card className="border-border/40 overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/40">
-          <span className="text-[13px] font-semibold">Users</span>
-          <span className="text-[11px] text-muted-foreground tabular-nums">
-            {filtered.length}
-          </span>
+          <div className="relative" ref={sortRef}>
+            <button
+              onClick={() => setSortOpen(!sortOpen)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-[12px] text-muted-foreground/60 hover:text-muted-foreground rounded-lg border border-border/30 transition-colors duration-150"
+            >
+              Sort: {SORT_OPTIONS.find((s) => s.value === sort)?.label}
+              <ChevronDown className={`h-3 w-3 transition-transform duration-150 ${sortOpen ? "rotate-180" : ""}`} />
+            </button>
+            <AnimatePresence>
+              {sortOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -4, scale: 0.97 }}
+                  transition={{ duration: 0.1 }}
+                  className="absolute right-0 top-full mt-1 bg-card border border-border/40 rounded-lg shadow-lg overflow-hidden z-50 min-w-[120px]"
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        setSort(opt.value);
+                        setSortOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 text-[12px] transition-colors duration-100 ${
+                        sort === opt.value
+                          ? "text-foreground bg-muted/40"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/20"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
-        <div>
+
+        <div className="rounded-xl border border-border/30 overflow-hidden">
           {loading ? (
-            Array.from({ length: 5 }).map((_, i) => <UserSkeleton key={i} />)
+            Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-border/20 last:border-0">
+                <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-2.5 w-40" />
+                </div>
+              </div>
+            ))
           ) : filtered.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
-              <User className="h-6 w-6 mx-auto mb-2 opacity-30" />
-              <p className="text-[13px]">No users found</p>
+            <div className="text-center py-20 text-muted-foreground/40">
+              <User className="h-5 w-5 mx-auto mb-2 opacity-40" />
+              <p className="text-[12px]">No users found</p>
             </div>
           ) : (
-            <ul>
+            <div>
               {filtered.map((u, i) => {
                 const status = u.presence?.status || "offline";
-                const initial = (
-                  u.display_name ||
-                  u.username ||
-                  "?"
-                )[0].toUpperCase();
+                const initial = (u.display_name || u.username || "?")[0].toUpperCase();
                 const platformBadges = (u.badges || [])
                   .filter((b) => typeof b === "object")
                   .map((b) => b.name);
+                const isSelected = selected?.id === u.id;
 
                 return (
-                  <motion.li
+                  <motion.div
                     key={u.id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: Math.min(i * 0.015, 0.3) }}
-                    onClick={() => setSelected(u)}
-                    className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors duration-100 border-b border-border/30 last:border-0 ${
-                      selected?.id === u.id
-                        ? "bg-muted/60"
-                        : "hover:bg-muted/30"
+                    transition={{ delay: Math.min(i * 0.01, 0.2) }}
+                    onClick={() => setSelected(isSelected ? null : u)}
+                    className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors duration-100 border-b border-border/15 last:border-0 ${
+                      isSelected ? "bg-muted/40" : "hover:bg-muted/20"
                     }`}
                   >
                     <div className="relative shrink-0">
-                      <div className="h-8 w-8 rounded-full bg-muted/60 flex items-center justify-center text-xs font-semibold text-muted-foreground overflow-hidden">
+                      <div className="h-8 w-8 rounded-full bg-muted/40 flex items-center justify-center text-[11px] font-semibold text-muted-foreground overflow-hidden">
                         {u.avatar_url ? (
-                          <img
-                            src={u.avatar_url}
-                            alt=""
-                            className="h-full w-full object-cover"
-                          />
+                          <img src={u.avatar_url} alt="" className="h-full w-full object-cover" />
                         ) : (
                           initial
                         )}
                       </div>
-                      <div
-                        className={`absolute -bottom-px -right-px h-2.5 w-2.5 rounded-full border-[1.5px] border-card ${STATUS_BG[status]}`}
-                      />
+                      <div className={`absolute -bottom-px -right-px h-2.5 w-2.5 rounded-full border-[1.5px] border-background ${STATUS_BG[status]}`} />
                     </div>
+
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 text-[13px] font-medium">
-                        <span className="truncate">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[13px] font-medium truncate">
                           {u.display_name || u.username}
                         </span>
                         {platformBadges.map((name) => (
                           <span
                             key={name}
-                            className="text-[9px] font-semibold uppercase tracking-wider px-1 py-px rounded bg-muted/80 text-muted-foreground shrink-0"
+                            className="text-[9px] font-semibold uppercase tracking-wider px-1 py-px rounded bg-muted/60 text-muted-foreground/60 shrink-0"
                           >
                             {name}
                           </span>
                         ))}
                       </div>
-                      <p className="text-[11px] text-muted-foreground truncate leading-tight">
-                        {u.presence?.custom_status?.text || u.bio || u.id}
+                      <p className="text-[11px] text-muted-foreground/50 truncate leading-tight">
+                        {u.presence?.custom_status?.text || u.bio || `@${u.username}`}
                       </p>
                     </div>
+
                     <div className="flex items-center gap-1.5 shrink-0 max-sm:hidden">
                       {u.presence?.is_mobile && (
-                        <Smartphone className="h-3 w-3 text-muted-foreground/60" />
+                        <Smartphone className="h-3 w-3 text-muted-foreground/30" />
                       )}
                       {u.spotify?.now_playing && (
-                        <span className="flex items-center gap-1 text-[10px] font-medium text-green-500/80 bg-green-500/8 px-1.5 py-0.5 rounded-full max-w-[160px] truncate">
+                        <span className="flex items-center gap-1 text-[10px] text-green-500/70 bg-green-500/5 px-1.5 py-0.5 rounded-full max-w-[140px] truncate">
                           <Music className="h-2.5 w-2.5 shrink-0" />
                           {u.spotify.now_playing}
                         </span>
                       )}
-                      <ChevronRight className="h-3 w-3 text-muted-foreground/40" />
                     </div>
-                  </motion.li>
+                  </motion.div>
                 );
               })}
-            </ul>
+            </div>
           )}
         </div>
-      </Card>
 
-      <AnimatePresence>
-        {selected && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.15 }}
-            className="mt-3 space-y-3"
+        <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground/30 px-1">
+          <span>{filtered.length} user{filtered.length !== 1 ? "s" : ""}</span>
+          <button
+            onClick={() => setShowLog(!showLog)}
+            className="flex items-center gap-1 hover:text-muted-foreground/50 transition-colors duration-100"
           >
-            <Card className="border-border/40 overflow-hidden">
-              <div className="flex items-center justify-between p-4 border-b border-border/40">
+            <Terminal className="h-3 w-3" />
+            {showLog ? "Hide" : "Show"} log
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {showLog && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.15 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-3 rounded-xl border border-border/30 overflow-hidden">
+                <div className="px-4 py-2 border-b border-border/20 flex items-center justify-between">
+                  <span className="text-[11px] font-medium text-muted-foreground/50">WebSocket Log</span>
+                  <span className="text-[10px] text-muted-foreground/30 tabular-nums">{events.length}</span>
+                </div>
+                <div className="max-h-[200px] overflow-y-auto p-3">
+                  {events.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground/30 text-center py-4">
+                      No events yet
+                    </p>
+                  ) : (
+                    <div className="space-y-px">
+                      {events.map((e, i) => (
+                        <motion.div
+                          key={`${e.time}-${i}`}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="flex items-baseline gap-2 text-[10px] font-mono py-px"
+                        >
+                          <span className="text-muted-foreground/25 shrink-0">{e.time}</span>
+                          <span className="text-violet-400/50 shrink-0">{e.type}</span>
+                          <span className="text-muted-foreground/35 truncate">{e.data}</span>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="w-[380px] max-xl:hidden sticky top-12 h-[calc(100vh-3rem)] overflow-y-auto">
+        <AnimatePresence mode="wait">
+          {selected ? (
+            <motion.div
+              key={selected.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.12 }}
+              className="p-5"
+            >
+              <div className="flex items-start justify-between mb-5">
                 <div className="flex items-center gap-3">
-                  <div className="h-11 w-11 rounded-full bg-muted/60 flex items-center justify-center text-base font-semibold text-muted-foreground overflow-hidden shrink-0">
+                  <div className="h-12 w-12 rounded-full bg-muted/40 flex items-center justify-center text-lg font-semibold text-muted-foreground overflow-hidden shrink-0">
                     {selected.avatar_url ? (
-                      <img
-                        src={selected.avatar_url}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
+                      <img src={selected.avatar_url} alt="" className="h-full w-full object-cover" />
                     ) : (
                       (selected.display_name || "?")[0].toUpperCase()
                     )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-[15px] font-semibold">
+                      <h3 className="text-[14px] font-semibold">
                         {selected.display_name || selected.username}
                       </h3>
-                      <span
-                        className={`text-[11px] font-medium capitalize ${
-                          STATUS_TEXT[selected.presence?.status] || ""
-                        }`}
-                      >
+                      <span className={`text-[11px] font-medium capitalize ${STATUS_TEXT[selected.presence?.status] || ""}`}>
                         {selected.presence?.status || "offline"}
                       </span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground font-mono">
-                      @{selected.username} · {selected.id}
+                    <p className="text-[11px] text-muted-foreground/50 font-mono">
+                      @{selected.username}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setSelected(null)}
-                  className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors duration-100"
+                  className="p-1 rounded-md text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/30 transition-colors duration-100"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
 
-              <div className="grid grid-cols-3 max-sm:grid-cols-1 divide-x divide-y divide-border/30">
-                <DetailField label="Role">
-                  <span className="text-[13px]">{selected.platform_role || "user"}</span>
-                </DetailField>
-                <DetailField label="Mobile">
-                  <span className="text-[13px]">{selected.presence?.is_mobile ? "Yes" : "No"}</span>
-                </DetailField>
-                <DetailField label="Spotify">
-                  <span className="text-[13px] truncate block">
-                    {selected.spotify?.now_playing ||
-                      (selected.spotify?.connected ? "Connected" : "—")}
-                  </span>
-                </DetailField>
-              </div>
-
-              {(selected.bio || selected.presence?.custom_status?.text) && (
-                <div className="grid grid-cols-2 max-sm:grid-cols-1 divide-x divide-border/30 border-t border-border/30">
-                  <DetailField label="Bio">
-                    <span className="text-[13px] text-muted-foreground">
-                      {selected.bio || "—"}
-                    </span>
-                  </DetailField>
-                  <DetailField label="Custom Status">
-                    <span className="text-[13px] text-muted-foreground">
-                      {selected.presence?.custom_status?.text || "—"}
-                    </span>
-                  </DetailField>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Role" value={selected.platform_role || "user"} />
+                  <Field label="Mobile" value={selected.presence?.is_mobile ? "Yes" : "No"} />
                 </div>
-              )}
 
-              {allBadges.length > 0 && (
-                <div className="border-t border-border/30">
-                  <DetailField label="Badges" full>
+                {selected.bio && <Field label="Bio" value={selected.bio} />}
+
+                {selected.presence?.custom_status?.text && (
+                  <Field label="Custom Status" value={selected.presence.custom_status.text} />
+                )}
+
+                {selected.spotify?.now_playing && (
+                  <div className="rounded-lg border border-green-500/10 bg-green-500/5 p-3">
+                    <p className="text-[10px] font-medium text-green-500/50 uppercase tracking-wider mb-1">
+                      Listening to
+                    </p>
+                    <p className="text-[12px] text-green-400/80">{selected.spotify.now_playing}</p>
+                  </div>
+                )}
+
+                {allBadges.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider mb-2">
+                      Badges
+                    </p>
                     <div className="flex flex-wrap gap-1">
                       {allBadges.map((b, i) => (
                         <span
                           key={i}
-                          className="inline-flex items-center gap-1 text-[11px] bg-muted/50 border border-border/30 px-2 py-0.5 rounded-md text-muted-foreground"
+                          className="text-[10px] bg-muted/30 border border-border/20 px-1.5 py-0.5 rounded-md text-muted-foreground/60"
                         >
-                          {typeof b === "string"
-                            ? b
-                            : b.icon
-                              ? `${b.icon} ${b.name}`
-                              : b.name}
+                          {typeof b === "string" ? b : b.icon ? `${b.icon} ${b.name}` : b.name}
                         </span>
                       ))}
                     </div>
-                  </DetailField>
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider mb-1.5">
+                    API
+                  </p>
+                  <div className="flex items-center gap-2 text-[11px] font-mono text-muted-foreground/40">
+                    <code className="truncate select-all flex-1">
+                      /v1/users/{selected.id}
+                    </code>
+                    <a
+                      href={`${window.location.origin}/v1/users/${selected.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 p-1 rounded hover:bg-muted/30 transition-colors duration-100"
+                    >
+                      <ArrowUpRight className="h-3 w-3" />
+                    </a>
+                  </div>
                 </div>
-              )}
 
-              <div className="border-t border-border/30">
-                <DetailField label="API Endpoint" full>
-                  <code className="text-[11px] font-mono text-muted-foreground select-all">
-                    {window.location.origin}/v1/users/{selected.id}
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider mb-1.5">
+                    ID
+                  </p>
+                  <code className="text-[11px] font-mono text-muted-foreground/40 select-all">
+                    {selected.id}
                   </code>
-                </DetailField>
-              </div>
-            </Card>
+                </div>
 
-            <Card className="border-border/40 overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-border/40">
-                <span className="text-[13px] font-semibold">JSON</span>
+                <details className="group">
+                  <summary className="text-[10px] font-medium text-muted-foreground/30 uppercase tracking-wider cursor-pointer hover:text-muted-foreground/50 transition-colors duration-100 list-none flex items-center gap-1">
+                    <ChevronDown className="h-3 w-3 transition-transform duration-150 group-open:rotate-180" />
+                    Raw JSON
+                  </summary>
+                  <pre className="mt-2 bg-muted/20 border border-border/20 rounded-lg p-3 text-[10px] font-mono text-muted-foreground/40 overflow-x-auto max-h-[300px] overflow-y-auto leading-relaxed">
+                    {JSON.stringify(selected, null, 2)}
+                  </pre>
+                </details>
               </div>
-              <div className="p-3">
-                <pre className="bg-muted/30 border border-border/30 rounded-lg p-3 text-[11px] font-mono text-muted-foreground overflow-x-auto leading-relaxed max-h-[360px] overflow-y-auto">
-                  {JSON.stringify(selected, null, 2)}
-                </pre>
-              </div>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <Card className="mt-3 border-border/40 overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/40">
-          <div className="flex items-center gap-1.5">
-            <Terminal className="h-3 w-3 text-muted-foreground/60" />
-            <span className="text-[13px] font-semibold">Events</span>
-          </div>
-          <span className="text-[11px] text-muted-foreground tabular-nums">
-            {events.length}
-          </span>
-        </div>
-        <div className="p-3 max-h-[240px] overflow-y-auto">
-          {events.length === 0 ? (
-            <p className="text-[11px] text-muted-foreground/60 text-center py-8">
-              Waiting for events...
-            </p>
+            </motion.div>
           ) : (
-            <div className="space-y-px">
-              {events.map((e, i) => (
-                <motion.div
-                  key={`${e.time}-${i}`}
-                  initial={{ opacity: 0, x: -4 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.1 }}
-                  className="flex items-baseline gap-2.5 text-[11px] font-mono py-0.5"
-                >
-                  <span className="text-muted-foreground/50 shrink-0">
-                    {e.time}
-                  </span>
-                  <span className="text-violet-400/80 shrink-0 font-medium">
-                    {e.type}
-                  </span>
-                  <span className="text-muted-foreground/60 truncate">
-                    {e.data}
-                  </span>
-                </motion.div>
-              ))}
-            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex items-center justify-center h-full text-muted-foreground/20"
+            >
+              <div className="text-center">
+                <User className="h-5 w-5 mx-auto mb-2 opacity-40" />
+                <p className="text-[12px]">Select a user</p>
+              </div>
+            </motion.div>
           )}
-        </div>
-      </Card>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
 
-      <footer className="text-center py-8 text-[11px] text-muted-foreground/40">
-        Beacon · DisTalk Presence API
-      </footer>
+function Field({ label, value }) {
+  return (
+    <div>
+      <p className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider mb-1">
+        {label}
+      </p>
+      <p className="text-[12px] text-muted-foreground/70 leading-relaxed">{value}</p>
     </div>
   );
 }

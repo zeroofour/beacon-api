@@ -9,9 +9,6 @@ const SECTIONS = [
   { id: "exposure", label: "Public Exposure" },
   { id: "retention", label: "Data Retention" },
   { id: "opting-out", label: "Opting Out" },
-  { id: "third-party", label: "Third-Party" },
-  { id: "changes", label: "Changes" },
-  { id: "contact", label: "Contact" },
 ];
 
 function DataList({ items }) {
@@ -24,9 +21,7 @@ function DataList({ items }) {
             i < items.length - 1 ? "border-b border-border/20" : ""
           }`}
         >
-          <span className="text-muted-foreground/30 mt-1 shrink-0 text-[8px]">
-            ●
-          </span>
+          <span className="text-muted-foreground/30 mt-1 shrink-0 text-[8px]">●</span>
           <span className="leading-relaxed">{item}</span>
         </div>
       ))}
@@ -87,30 +82,19 @@ export default function Privacy() {
 
       <main className="flex-1 max-w-3xl px-10 py-10 max-lg:px-6">
         <div className="mb-12">
-          <h1
-            id="overview"
-            className="text-2xl font-bold tracking-tight mb-2 scroll-mt-16"
-          >
+          <h1 id="overview" className="text-2xl font-bold tracking-tight mb-2 scroll-mt-16">
             Privacy Policy
           </h1>
-          <p className="text-[12px] text-muted-foreground/50">
-            Last updated — July 31, 2026
-          </p>
+          <p className="text-[12px] text-muted-foreground/50">Last updated — July 31, 2026</p>
         </div>
 
         <p className="text-[14px] text-muted-foreground/80 leading-relaxed mb-10">
-          Beacon is a presence API for DisTalk. By being in a server where
-          Beacon is active, your visible DisTalk presence data may be collected,
-          cached, and exposed through the API.
+          Beacon is a presence API for DisTalk. By being in a server where Beacon is active, your
+          visible DisTalk presence data may be collected, cached, and exposed through the API.
         </p>
 
         <section className="mb-10">
-          <h2
-            id="what"
-            className="text-[15px] font-semibold mb-4 scroll-mt-16"
-          >
-            What We Collect
-          </h2>
+          <h2 id="what" className="text-[15px] font-semibold mb-4 scroll-mt-16">What We Collect</h2>
           <DataList
             items={[
               "User ID, username, and display name",
@@ -127,24 +111,17 @@ export default function Privacy() {
         </section>
 
         <section className="mb-10">
-          <h2
-            id="how-collected"
-            className="text-[15px] font-semibold mb-3 scroll-mt-16"
-          >
+          <h2 id="how-collected" className="text-[15px] font-semibold mb-3 scroll-mt-16">
             How It's Collected
           </h2>
           <p className="text-[13px] text-muted-foreground/80 leading-relaxed">
-            Beacon collects data through a connected account that shares a server
-            with you. Only users visible to that account are tracked. No private
-            messages or DMs are accessed.
+            Beacon collects data through a connected account that shares a server with you. Only
+            users visible to that account are tracked. No private messages or DMs are accessed.
           </p>
         </section>
 
         <section className="mb-10">
-          <h2
-            id="how-used"
-            className="text-[15px] font-semibold mb-4 scroll-mt-16"
-          >
+          <h2 id="how-used" className="text-[15px] font-semibold mb-4 scroll-mt-16">
             How It's Used
           </h2>
           <DataList
@@ -157,84 +134,34 @@ export default function Privacy() {
         </section>
 
         <section className="mb-10">
-          <h2
-            id="exposure"
-            className="text-[15px] font-semibold mb-3 scroll-mt-16"
-          >
+          <h2 id="exposure" className="text-[15px] font-semibold mb-3 scroll-mt-16">
             Public Exposure
           </h2>
           <p className="text-[13px] text-muted-foreground/80 leading-relaxed">
-            Data tracked by Beacon is publicly accessible through API endpoints.
-            Anyone can query your presence status, badges, and profile data. Do
-            not join a Beacon-tracked server if you do not want this data
-            exposed.
+            Data tracked by Beacon is publicly accessible through API endpoints. Anyone can query
+            your presence status, badges, and profile data. Do not join a Beacon-tracked server if
+            you do not want this data exposed.
           </p>
         </section>
 
         <section className="mb-10">
-          <h2
-            id="retention"
-            className="text-[15px] font-semibold mb-3 scroll-mt-16"
-          >
+          <h2 id="retention" className="text-[15px] font-semibold mb-3 scroll-mt-16">
             Data Retention
           </h2>
           <p className="text-[13px] text-muted-foreground/80 leading-relaxed">
-            Presence data is held in memory and clears on restart. KV data and
-            notes may persist to disk. If you leave the tracked server, your
-            presence will no longer be updated but cached data may remain until
-            the next restart.
+            Presence data is held in memory and clears on restart. KV data and notes may persist to
+            disk. If you leave the tracked server, your presence will no longer be updated but cached
+            data may remain until the next restart.
           </p>
         </section>
 
         <section className="mb-10">
-          <h2
-            id="opting-out"
-            className="text-[15px] font-semibold mb-3 scroll-mt-16"
-          >
+          <h2 id="opting-out" className="text-[15px] font-semibold mb-3 scroll-mt-16">
             Opting Out
           </h2>
           <p className="text-[13px] text-muted-foreground/80 leading-relaxed">
-            Leave the Beacon-tracked server. To request immediate removal of
-            cached data, reach out through the DisTalk support server.
-          </p>
-        </section>
-
-        <section className="mb-10">
-          <h2
-            id="third-party"
-            className="text-[15px] font-semibold mb-3 scroll-mt-16"
-          >
-            Third-Party Services
-          </h2>
-          <p className="text-[13px] text-muted-foreground/80 leading-relaxed">
-            Beacon runs on Railway. Standard access logging may apply. No data is
-            sold or shared with third parties.
-          </p>
-        </section>
-
-        <section className="mb-10">
-          <h2
-            id="changes"
-            className="text-[15px] font-semibold mb-3 scroll-mt-16"
-          >
-            Changes
-          </h2>
-          <p className="text-[13px] text-muted-foreground/80 leading-relaxed">
-            This policy may be updated at any time. Changes will be reflected on
-            this page with an updated date.
-          </p>
-        </section>
-
-        <section className="mb-10">
-          <h2
-            id="contact"
-            className="text-[15px] font-semibold mb-3 scroll-mt-16"
-          >
-            Contact
-          </h2>
-          <p className="text-[13px] text-muted-foreground/80 leading-relaxed">
-            Join the Beacon support server on DisTalk for questions or data
-            removal requests.
+            Leave the Beacon-tracked server. To request immediate removal of cached data, reach out
+            through the DisTalk support server.
           </p>
         </section>
 
