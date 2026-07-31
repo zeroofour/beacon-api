@@ -140,13 +140,14 @@ async function handleCommand(msg) {
     case "/docs":     return cmdDocs(reply);
     case "/privacy":  return cmdPrivacy(reply);
     case "/who":      return cmdWho(argsLower, msg, reply);
+    case "/help":     return cmdHelp(reply);
     default:          return;
   }
 }
 
 function formatBadge(b) {
   if (b.icon) return `${b.icon} ${b.name}`;
-  if (b.lucide) return `[${b.lucide}] ${b.name}`;
+  if (b.lucide) return b.name;
   return b.name;
 }
 
@@ -154,17 +155,23 @@ function formatBadgeList(badges) {
   return badges.map(formatBadge).join(", ");
 }
 
+function row(label, value) {
+  return `${label} <-> ${value}`;
+}
+
 async function cmdStatus(query, reply) {
-  if (!query) return reply("`usage: /status <username>`");
+  if (!query) return reply("## Usage\n`/status <username>`");
   const user = findUser(query);
-  if (!user) return reply(`\`user "${query}" not found\``);
+  if (!user) return reply(`**User "${query}" not found**`);
 
   const p = user.presence;
-  let t = `\`${statusDot(p.status)} ${user.display_name} (@${user.username})\`\n`;
-  t += `\`status    ${p.status}\`\n`;
-  if (p.is_mobile) t += "`device    mobile`\n";
-  if (p.activity) t += `\`activity  ${p.activity}\`\n`;
-  if (user.spotify?.now_playing) t += `\`spotify   ${user.spotify.now_playing}\`\n`;
+  let t = `## ${user.display_name}\n`;
+  t += `-------\n`;
+  t += `${row("**Status**", `\`${p.status}\``)}\n`;
+  if (p.is_mobile) t += `${row("**Device**", "`mobile`")}\n`;
+  if (p.custom_status?.text) t += `${row("**Custom**", p.custom_status.text)}\n`;
+  if (p.activity) t += `${row("**Activity**", p.activity)}\n`;
+  if (user.spotify?.now_playing) t += `${row("**Spotify**", user.spotify.now_playing)}\n`;
 
   return reply(t);
 }
@@ -176,48 +183,70 @@ async function cmdOnline(reply) {
   const dnd = users.filter((u) => u.presence.status === "dnd");
   const total = online.length + idle.length + dnd.length;
 
-  let t = `\`online users (${total})\`\n\n`;
-  if (online.length) { online.forEach((u) => (t += `\`[on]   ${u.display_name} (@${u.username})\`\n`)); t += "\n"; }
-  if (idle.length)   { idle.forEach((u) => (t += `\`[idle] ${u.display_name} (@${u.username})\`\n`)); t += "\n"; }
-  if (dnd.length)    { dnd.forEach((u) => (t += `\`[dnd]  ${u.display_name} (@${u.username})\`\n`)); }
-  if (!total) t += "`nobody is online right now`";
+  let t = `## Online Users\n`;
+  t += `**${total}** active right now\n`;
+  t += `-------\n`;
+
+  if (online.length) {
+    t += `**Online** (${online.length})\n`;
+    online.forEach((u) => (t += `- [x] ${u.display_name} (@${u.username})\n`));
+    t += "\n";
+  }
+  if (idle.length) {
+    t += `**Idle** (${idle.length})\n`;
+    idle.forEach((u) => (t += `- [ ] ${u.display_name} (@${u.username})\n`));
+    t += "\n";
+  }
+  if (dnd.length) {
+    t += `**DND** (${dnd.length})\n`;
+    dnd.forEach((u) => (t += `- [ ] ${u.display_name} (@${u.username})\n`));
+  }
+  if (!total) t += "*Nobody is online right now*";
 
   return reply(t);
 }
 
 async function cmdProfile(query, reply) {
-  if (!query) return reply("`usage: /profile <username>`");
+  if (!query) return reply("## Usage\n`/profile <username>`");
   const user = findUser(query);
-  if (!user) return reply(`\`user "${query}" not found\``);
+  if (!user) return reply(`**User "${query}" not found**`);
 
   const p = user.presence;
-  let t = `\`${statusDot(p.status)} ${user.display_name} (@${user.username})\`\n`;
-  t += `\`status    ${p.status}\`\n`;
-  t += `\`role      ${user.platform_role}\`\n`;
-  if (user.bio) t += `\`bio       ${user.bio}\`\n`;
-  if (p.is_mobile) t += "`device    mobile`\n";
+  let t = `## ${user.display_name}\n`;
+  t += `@${user.username} · \`${user.id}\`\n`;
+  t += `-------\n`;
+  t += `${row("**Status**", `\`${p.status}\``)}\n`;
+  t += `${row("**Role**", `\`${user.platform_role}\``)}\n`;
+  if (user.bio) t += `${row("**Bio**", user.bio)}\n`;
+  if (p.is_mobile) t += `${row("**Device**", "`mobile`")}\n`;
 
   if (user.badges?.length) {
-    t += `\`badges    ${formatBadgeList(user.badges)}\`\n`;
+    t += `${row("**Badges**", formatBadgeList(user.badges))}\n`;
   }
-
   if (user.self_badges?.length) {
-    t += `\`tags      ${formatBadgeList(user.self_badges)}\`\n`;
+    t += `${row("**Tags**", formatBadgeList(user.self_badges))}\n`;
   }
 
-  if (user.tag) t += `\`server    ${user.tag.text || ""} (${user.tag.server_name})\`\n`;
-  if (user.socials?.youtube) t += `\`youtube   ${user.socials.youtube}\`\n`;
-  if (user.socials?.twitch) t += `\`twitch    ${user.socials.twitch}\`\n`;
-  if (user.socials?.tiktok) t += `\`tiktok    ${user.socials.tiktok}\`\n`;
-  if (user.spotify?.connected) t += "`spotify   connected`\n";
-  if (user.spotify?.now_playing) t += `\`playing   ${user.spotify.now_playing}\`\n`;
-  if (p.activity) t += `\`activity  ${p.activity}\`\n`;
+  if (user.tag) t += `${row("**Server Tag**", `${user.tag.text || ""} (${user.tag.server_name})`)}\n`;
+
+  if (user.socials?.youtube) t += `${row("**YouTube**", user.socials.youtube)}\n`;
+  if (user.socials?.twitch) t += `${row("**Twitch**", user.socials.twitch)}\n`;
+  if (user.socials?.tiktok) t += `${row("**TikTok**", user.socials.tiktok)}\n`;
+
+  if (user.spotify?.connected) {
+    if (user.spotify.now_playing) {
+      t += `${row("**Spotify**", user.spotify.now_playing)}\n`;
+    } else {
+      t += `${row("**Spotify**", "connected")}\n`;
+    }
+  }
+  if (p.activity) t += `${row("**Activity**", p.activity)}\n`;
 
   return reply(t);
 }
 
 async function cmdSearch(query, reply) {
-  if (!query) return reply("`usage: /search <query>`");
+  if (!query) return reply("## Usage\n`/search <query>`");
 
   const results = store
     .values()
@@ -226,76 +255,79 @@ async function cmdSearch(query, reply) {
     )
     .slice(0, 10);
 
-  if (!results.length) return reply(`\`no users matching "${query}"\``);
+  if (!results.length) return reply(`**No users matching "${query}"**`);
 
-  let t = `\`search: "${query}" (${results.length} results)\`\n\n`;
+  let t = `## Search Results\n`;
+  t += `**"${query}"** — ${results.length} result${results.length !== 1 ? "s" : ""}\n`;
+  t += `-------\n`;
+
+  t += `| User | Status |\n`;
+  t += `| --- | --- |\n`;
   results.forEach((u) => {
-    t += `\`${statusDot(u.presence.status)} ${u.display_name} (@${u.username})\`\n`;
+    t += `| ${u.display_name} (@${u.username}) | \`${u.presence.status}\` |\n`;
   });
 
   return reply(t);
 }
 
 async function cmdApi(query, reply) {
-  if (!query) return reply("`usage: /api <username>`");
+  if (!query) return reply("## Usage\n`/api <username>`");
   const user = findUser(query);
-  if (!user) return reply(`\`user "${query}" not found\``);
+  if (!user) return reply(`**User "${query}" not found**`);
 
   const { _ts, ...clean } = user;
-  let t = "";
-  JSON.stringify({ success: true, data: clean }, null, 2)
-    .split("\n")
-    .forEach((line) => (t += `\`${line}\`\n`));
+  const json = JSON.stringify({ success: true, data: clean }, null, 2);
+
+  let t = `## API Response\n`;
+  t += `\`${user.display_name}\`\n`;
+  t += `-------\n`;
+  json.split("\n").forEach((line) => (t += `\`${line}\`\n`));
 
   return reply(t);
 }
 
 async function cmdUserId(query, reply) {
-  if (!query) return reply("`usage: /userid <username>`");
+  if (!query) return reply("## Usage\n`/userid <username>`");
   const user = findUser(query);
-  if (!user) return reply(`\`user "${query}" not found\``);
-  return reply(`\`${user.display_name} > ${user.id}\``);
+  if (!user) return reply(`**User "${query}" not found**`);
+  return reply(`${row(`**${user.display_name}**`, `\`${user.id}\``)}`);
 }
 
 async function cmdAvatar(query, reply) {
-  if (!query) return reply("`usage: /avatar <username>`");
+  if (!query) return reply("## Usage\n`/avatar <username>`");
   const user = findUser(query);
-  if (!user) return reply(`\`user "${query}" not found\``);
-  if (!user.avatar_url) return reply(`\`${user.display_name} has no avatar\``);
+  if (!user) return reply(`**User "${query}" not found**`);
+  if (!user.avatar_url) return reply(`**${user.display_name}** has no avatar`);
   return reply(user.avatar_url);
 }
 
 async function cmdBadges(query, reply) {
-  if (!query) return reply("`usage: /badges <username>`");
+  if (!query) return reply("## Usage\n`/badges <username>`");
   const user = findUser(query);
-  if (!user) return reply(`\`user "${query}" not found\``);
+  if (!user) return reply(`**User "${query}" not found**`);
 
   const platform = user.badges || [];
   const self = user.self_badges || [];
   const total = platform.length + self.length;
 
-  if (!total) return reply(`\`${user.display_name} has no badges\``);
+  if (!total) return reply(`**${user.display_name}** has no badges`);
 
-  let t = `\`${user.display_name} — ${total} badge${total !== 1 ? "s" : ""}\`\n\n`;
+  let t = `## ${user.display_name}\n`;
+  t += `**${total}** badge${total !== 1 ? "s" : ""}\n`;
+  t += `-------\n`;
 
   if (platform.length) {
-    t += "`platform`\n";
+    t += `**Platform**\n`;
     platform.forEach((b) => {
-      t += `\`  ${b.icon} ${b.name}\`\n`;
+      t += `- [x] ${b.icon ? b.icon + " " : ""}${b.name}\n`;
     });
     t += "\n";
   }
 
   if (self.length) {
-    t += "`self`\n";
+    t += `**Self**\n`;
     self.forEach((b) => {
-      if (b.icon) {
-        t += `\`  ${b.icon} ${b.name}\`\n`;
-      } else if (b.lucide) {
-        t += `\`  [${b.lucide}] ${b.name}\`\n`;
-      } else {
-        t += `\`  ${b.name}\`\n`;
-      }
+      t += `- [x] ${b.icon ? b.icon + " " : ""}${b.name}\n`;
     });
   }
 
@@ -303,92 +335,101 @@ async function cmdBadges(query, reply) {
 }
 
 async function cmdSpotify(query, reply) {
-  if (!query) return reply("`usage: /spotify <username>`");
+  if (!query) return reply("## Usage\n`/spotify <username>`");
   const user = findUser(query);
-  if (!user) return reply(`\`user "${query}" not found\``);
-  if (!user.spotify?.connected) return reply(`\`${user.display_name} has no spotify connected\``);
-  if (!user.spotify.now_playing) return reply(`\`${user.display_name} is not listening to anything\``);
-  return reply(`\`${user.display_name} is listening to: ${user.spotify.now_playing}\``);
+  if (!user) return reply(`**User "${query}" not found**`);
+  if (!user.spotify?.connected) return reply(`**${user.display_name}** has no Spotify connected`);
+  if (!user.spotify.now_playing) return reply(`**${user.display_name}** is not listening to anything`);
+  return reply(`${row(`**${user.display_name}**`, user.spotify.now_playing)}`);
 }
 
 async function cmdSocials(query, reply) {
-  if (!query) return reply("`usage: /socials <username>`");
+  if (!query) return reply("## Usage\n`/socials <username>`");
   const user = findUser(query);
-  if (!user) return reply(`\`user "${query}" not found\``);
+  if (!user) return reply(`**User "${query}" not found**`);
 
   const s = user.socials;
   if (!s?.youtube && !s?.twitch && !s?.tiktok && !s?.spotify) {
-    return reply(`\`${user.display_name} has no socials linked\``);
+    return reply(`**${user.display_name}** has no socials linked`);
   }
 
-  let t = `\`${user.display_name} socials\`\n\n`;
-  if (s.youtube) t += `\`youtube   ${s.youtube}\`\n`;
-  if (s.twitch)  t += `\`twitch    ${s.twitch}\`\n`;
-  if (s.tiktok)  t += `\`tiktok    ${s.tiktok}\`\n`;
-  if (s.spotify) t += `\`spotify   ${s.spotify}\`\n`;
+  let t = `## ${user.display_name}\n`;
+  t += `**Socials**\n`;
+  t += `-------\n`;
+  if (s.youtube) t += `${row("**YouTube**", s.youtube)}\n`;
+  if (s.twitch)  t += `${row("**Twitch**", s.twitch)}\n`;
+  if (s.tiktok)  t += `${row("**TikTok**", s.tiktok)}\n`;
+  if (s.spotify) t += `${row("**Spotify**", s.spotify)}\n`;
 
   return reply(t);
 }
 
 async function cmdTag(query, reply) {
-  if (!query) return reply("`usage: /tag <username>`");
+  if (!query) return reply("## Usage\n`/tag <username>`");
   const user = findUser(query);
-  if (!user) return reply(`\`user "${query}" not found\``);
-  if (!user.tag) return reply(`\`${user.display_name} has no server tag\``);
+  if (!user) return reply(`**User "${query}" not found**`);
+  if (!user.tag) return reply(`**${user.display_name}** has no server tag`);
 
-  let t = `\`${user.display_name} tag\`\n\n`;
-  t += `\`text      ${user.tag.text || ""}\`\n`;
-  t += `\`server    ${user.tag.server_name}\`\n`;
-  if (user.tag.invite_slug) t += `\`invite    distalk.app/invite/${user.tag.invite_slug}\`\n`;
+  let t = `## ${user.display_name}\n`;
+  t += `**Server Tag**\n`;
+  t += `-------\n`;
+  t += `${row("**Text**", user.tag.text || "—")}\n`;
+  t += `${row("**Server**", user.tag.server_name)}\n`;
+  if (user.tag.invite_slug) t += `${row("**Invite**", `distalk.app/invite/${user.tag.invite_slug}`)}\n`;
 
   return reply(t);
 }
 
 async function cmdCompare(query, reply) {
   const parts = query.split(" ").filter(Boolean);
-  if (parts.length < 2) return reply("`usage: /compare <user1> <user2>`");
+  if (parts.length < 2) return reply("## Usage\n`/compare <user1> <user2>`");
 
   const user1 = findUser(parts[0]);
   const user2 = findUser(parts[1]);
 
-  if (!user1) return reply(`\`user "${parts[0]}" not found\``);
-  if (!user2) return reply(`\`user "${parts[1]}" not found\``);
+  if (!user1) return reply(`**User "${parts[0]}" not found**`);
+  if (!user2) return reply(`**User "${parts[1]}" not found**`);
 
   const b1 = (user1.badges?.length || 0) + (user1.self_badges?.length || 0);
   const b2 = (user2.badges?.length || 0) + (user2.self_badges?.length || 0);
 
-  let t = `\`comparing\`\n\n`;
-  t += `\`            ${pad(user1.display_name, 15)} ${pad(user2.display_name, 15)}\`\n`;
-  t += `\`status      ${pad(user1.presence.status, 15)} ${pad(user2.presence.status, 15)}\`\n`;
-  t += `\`role        ${pad(user1.platform_role, 15)} ${pad(user2.platform_role, 15)}\`\n`;
-  t += `\`mobile      ${pad(user1.presence.is_mobile ? "yes" : "no", 15)} ${pad(user2.presence.is_mobile ? "yes" : "no", 15)}\`\n`;
-  t += `\`badges      ${pad(String(b1), 15)} ${pad(String(b2), 15)}\`\n`;
-  t += `\`spotify     ${pad(user1.spotify?.connected ? "yes" : "no", 15)} ${pad(user2.spotify?.connected ? "yes" : "no", 15)}\`\n`;
+  let t = `## Compare\n`;
+  t += `-------\n`;
+  t += `| | **${user1.display_name}** | **${user2.display_name}** |\n`;
+  t += `| --- | --- | --- |\n`;
+  t += `| Status | \`${user1.presence.status}\` | \`${user2.presence.status}\` |\n`;
+  t += `| Role | \`${user1.platform_role}\` | \`${user2.platform_role}\` |\n`;
+  t += `| Mobile | ${user1.presence.is_mobile ? "Yes" : "No"} | ${user2.presence.is_mobile ? "Yes" : "No"} |\n`;
+  t += `| Badges | ${b1} | ${b2} |\n`;
+  t += `| Spotify | ${user1.spotify?.connected ? "Yes" : "No"} | ${user2.spotify?.connected ? "Yes" : "No"} |\n`;
 
   return reply(t);
 }
 
 async function cmdRandom(reply) {
   const users = store.values();
-  if (!users.length) return reply("`no users tracked`");
+  if (!users.length) return reply("**No users tracked**");
 
   const user = users[Math.floor(Math.random() * users.length)];
 
-  let t = `\`random user\`\n\n`;
-  t += `\`${statusDot(user.presence.status)} ${user.display_name} (@${user.username})\`\n`;
-  t += `\`id        ${user.id}\`\n`;
-  t += `\`status    ${user.presence.status}\`\n`;
-  t += `\`role      ${user.platform_role}\`\n`;
+  let t = `## Random User\n`;
+  t += `-------\n`;
+  t += `${row("**Name**", `${user.display_name} (@${user.username})`)}\n`;
+  t += `${row("**ID**", `\`${user.id}\``)}\n`;
+  t += `${row("**Status**", `\`${user.presence.status}\``)}\n`;
+  t += `${row("**Role**", `\`${user.platform_role}\``)}\n`;
 
   return reply(t);
 }
 
 async function cmdMobile(reply) {
   const mobile = store.values().filter((u) => u.presence.is_mobile);
-  if (!mobile.length) return reply("`no users on mobile right now`");
+  if (!mobile.length) return reply("**No users on mobile right now**");
 
-  let t = `\`mobile users (${mobile.length})\`\n\n`;
-  mobile.forEach((u) => (t += `\`${statusDot(u.presence.status)} ${u.display_name} (@${u.username})\`\n`));
+  let t = `## Mobile Users\n`;
+  t += `**${mobile.length}** user${mobile.length !== 1 ? "s" : ""}\n`;
+  t += `-------\n`;
+  mobile.forEach((u) => (t += `- [x] ${u.display_name} (@${u.username}) — \`${u.presence.status}\`\n`));
 
   return reply(t);
 }
@@ -400,42 +441,52 @@ async function cmdOffline(reply) {
     .sort((a, b) => new Date(b.presence.last_seen) - new Date(a.presence.last_seen))
     .slice(0, 10);
 
-  if (!offline.length) return reply("`no recently seen offline users`");
+  if (!offline.length) return reply("**No recently seen offline users**");
 
-  let t = `\`recently offline (${offline.length})\`\n\n`;
+  let t = `## Recently Offline\n`;
+  t += `-------\n`;
+  t += `| User | Last Seen |\n`;
+  t += `| --- | --- |\n`;
   offline.forEach((u) => {
-    t += `\`${u.display_name} (@${u.username}) — ${timeAgo(u.presence.last_seen)}\`\n`;
+    t += `| ${u.display_name} (@${u.username}) | ${timeAgo(u.presence.last_seen)} |\n`;
   });
 
   return reply(t);
 }
 
 async function cmdRole(query, reply) {
-  if (!query) return reply("`usage: /role <role>`\n`roles: user, admin, owner, supporter`");
+  if (!query) return reply("## Usage\n`/role <role>`\n\nRoles: `user`, `admin`, `owner`, `supporter`");
 
   const users = store.values().filter((u) => u.platform_role === query);
-  if (!users.length) return reply(`\`no users with role "${query}"\``);
+  if (!users.length) return reply(`**No users with role "${query}"**`);
 
-  let t = `\`role: ${query} (${users.length})\`\n\n`;
-  users.forEach((u) => (t += `\`${statusDot(u.presence.status)} ${u.display_name} (@${u.username})\`\n`));
+  let t = `## Role: ${query}\n`;
+  t += `**${users.length}** user${users.length !== 1 ? "s" : ""}\n`;
+  t += `-------\n`;
+  users.forEach((u) => (t += `- [x] ${u.display_name} (@${u.username}) — \`${u.presence.status}\`\n`));
 
   return reply(t);
 }
 
 async function cmdBio(query, reply) {
-  if (!query) return reply("`usage: /bio <username>`");
+  if (!query) return reply("## Usage\n`/bio <username>`");
   const user = findUser(query);
-  if (!user) return reply(`\`user "${query}" not found\``);
-  if (!user.bio) return reply(`\`${user.display_name} has no bio\``);
-  return reply(`\`${user.display_name} bio:\`\n\`${user.bio}\``);
+  if (!user) return reply(`**User "${query}" not found**`);
+  if (!user.bio) return reply(`**${user.display_name}** has no bio`);
+
+  let t = `## ${user.display_name}\n`;
+  t += `-------\n`;
+  t += user.bio;
+
+  return reply(t);
 }
 
 async function cmdWhois(query, reply) {
-  if (!query) return reply("`usage: /whois <user_id>`");
+  if (!query) return reply("## Usage\n`/whois <user_id>`");
   const id = query.startsWith("usr_") ? query : `usr_${query}`;
   const user = store.get(id);
-  if (!user) return reply(`\`no user found with id ${id}\``);
-  return reply(`\`${id} > ${user.display_name} (@${user.username})\``);
+  if (!user) return reply(`**No user found with ID** \`${id}\``);
+  return reply(`${row(`\`${id}\``, `**${user.display_name}** (@${user.username})`)}`);
 }
 
 async function cmdStats(reply) {
@@ -453,20 +504,23 @@ async function cmdStats(reply) {
     (u) => (u.badges?.length || 0) + (u.self_badges?.length || 0) > 0
   ).length;
 
-  let t = `\`beacon stats\`\n\n`;
-  t += `\`users       ${total}\`\n`;
-  t += `\`online      ${online}\`\n`;
-  t += `\`idle        ${idle}\`\n`;
-  t += `\`dnd         ${dnd}\`\n`;
-  t += `\`offline     ${offline}\`\n`;
-  t += `\`mobile      ${mobile}\`\n`;
-  t += `\`spotify     ${spotify}\`\n`;
-  t += `\`has bio     ${withBio}\`\n`;
-  t += `\`has avatar  ${withAvatar}\`\n`;
-  t += `\`has badges  ${withBadges}\`\n`;
-  t += `\`uptime      ${formatUptime(Date.now() - START_TIME)}\`\n`;
-  t += `\`commands    ${commandsRun}\`\n`;
-  t += `\`channels    ${subs.size}\`\n`;
+  let t = `## Beacon Stats\n`;
+  t += `-------\n`;
+  t += `| Metric | Value |\n`;
+  t += `| --- | --- |\n`;
+  t += `| Users | **${total}** |\n`;
+  t += `| Online | **${online}** |\n`;
+  t += `| Idle | **${idle}** |\n`;
+  t += `| DND | **${dnd}** |\n`;
+  t += `| Offline | **${offline}** |\n`;
+  t += `| Mobile | **${mobile}** |\n`;
+  t += `| Spotify | **${spotify}** |\n`;
+  t += `| Has Bio | **${withBio}** |\n`;
+  t += `| Has Avatar | **${withAvatar}** |\n`;
+  t += `| Has Badges | **${withBadges}** |\n`;
+  t += `| Uptime | **${formatUptime(Date.now() - START_TIME)}** |\n`;
+  t += `| Commands | **${commandsRun}** |\n`;
+  t += `| Channels | **${subs.size}** |\n`;
 
   return reply(t);
 }
@@ -479,106 +533,163 @@ async function cmdServer(msg, reply) {
   const dnd = users.filter((u) => u.presence.status === "dnd").length;
   const offline = total - online - idle - dnd;
 
-  let t = `\`server: ${msg.server_id}\`\n`;
-  t += `\`channel: ${msg.channel_id}\`\n\n`;
-  t += `\`total     ${total} users\`\n`;
-  t += `\`online    ${online}\`\n`;
-  t += `\`idle      ${idle}\`\n`;
-  t += `\`dnd       ${dnd}\`\n`;
-  t += `\`offline   ${offline}\`\n`;
+  let t = `## Server Info\n`;
+  t += `\`${msg.server_id}\` · \`${msg.channel_id}\`\n`;
+  t += `-------\n`;
+  t += `| Status | Count |\n`;
+  t += `| --- | --- |\n`;
+  t += `| Total | **${total}** |\n`;
+  t += `| Online | **${online}** |\n`;
+  t += `| Idle | **${idle}** |\n`;
+  t += `| DND | **${dnd}** |\n`;
+  t += `| Offline | **${offline}** |\n`;
 
   return reply(t);
 }
 
 async function cmdSet(input, msg, reply) {
   const space = input.indexOf(" ");
-  if (space === -1) return reply("`usage: /set <key> <value>`");
+  if (space === -1) return reply("## Usage\n`/set <key> <value>`");
   const key = input.substring(0, space).trim();
   const value = input.substring(space + 1).trim();
   kv.set(key, value);
-  return reply(`\`${key} = ${value}\``);
+  return reply(`${row(`\`${key}\``, `\`${value}\``)}`);
 }
 
 async function cmdGet(key, reply) {
-  if (!key) return reply("`usage: /get <key>`");
+  if (!key) return reply("## Usage\n`/get <key>`");
   const value = kv.get(key);
-  if (value === null) return reply(`\`key "${key}" not found\``);
-  return reply(`\`${key} = ${value}\``);
+  if (value === null) return reply(`**Key "${key}" not found**`);
+  return reply(`${row(`\`${key}\``, `\`${value}\``)}`);
 }
 
 async function cmdDel(key, msg, reply) {
-  if (!key) return reply("`usage: /del <key>`");
-  if (msg.user_id !== OWNER_ID) return reply("`only the owner can delete keys`");
+  if (!key) return reply("## Usage\n`/del <key>`");
+  if (msg.user_id !== OWNER_ID) return reply("**Only the owner can delete keys**");
   kv.del(key);
-  return reply(`\`deleted "${key}"\``);
+  return reply(`~~${key}~~ **deleted**`);
 }
 
 async function cmdKeys(reply) {
   const keys = kv.keys();
-  if (!keys.length) return reply("`no keys stored`");
+  if (!keys.length) return reply("**No keys stored**");
 
-  let t = `\`stored keys (${keys.length})\`\n\n`;
-  keys.forEach((k) => (t += `\`${k} = ${kv.get(k)}\`\n`));
+  let t = `## Stored Keys\n`;
+  t += `**${keys.length}** key${keys.length !== 1 ? "s" : ""}\n`;
+  t += `-------\n`;
+  t += `| Key | Value |\n`;
+  t += `| --- | --- |\n`;
+  keys.forEach((k) => (t += `| \`${k}\` | \`${kv.get(k)}\` |\n`));
 
   return reply(t);
 }
 
 async function cmdNote(input, msg, reply) {
   const space = input.indexOf(" ");
-  if (space === -1) return reply("`usage: /note <user> <text>`");
+  if (space === -1) return reply("## Usage\n`/note <user> <text>`");
 
   const username = input.substring(0, space).trim().toLowerCase();
   const text = input.substring(space + 1).trim();
   const user = findUser(username);
-  if (!user) return reply(`\`user "${username}" not found\``);
+  if (!user) return reply(`**User "${username}" not found**`);
 
   const key = `note:${user.id}`;
   const existing = kv.get(key) || [];
   existing.push({ text, by: msg.user_id, at: new Date().toISOString() });
   kv.set(key, existing);
 
-  return reply(`\`note added for ${user.display_name} (${existing.length} total)\``);
+  return reply(`Note added for **${user.display_name}** (${existing.length} total)`);
 }
 
 async function cmdNotes(query, reply) {
-  if (!query) return reply("`usage: /notes <user>`");
+  if (!query) return reply("## Usage\n`/notes <user>`");
   const user = findUser(query);
-  if (!user) return reply(`\`user "${query}" not found\``);
+  if (!user) return reply(`**User "${query}" not found**`);
 
   const notes = kv.get(`note:${user.id}`);
-  if (!notes?.length) return reply(`\`no notes for ${user.display_name}\``);
+  if (!notes?.length) return reply(`**No notes for ${user.display_name}**`);
 
-  let t = `\`notes for ${user.display_name} (${notes.length})\`\n\n`;
-  notes.forEach((n, i) => (t += `\`${i + 1}. ${n.text}\`\n`));
+  let t = `## Notes for ${user.display_name}\n`;
+  t += `**${notes.length}** note${notes.length !== 1 ? "s" : ""}\n`;
+  t += `-------\n`;
+  notes.forEach((n, i) => (t += `${i + 1}. ${n.text}\n`));
 
   return reply(t);
 }
 
 async function cmdAnnounce(text, msg, reply) {
-  if (msg.user_id !== OWNER_ID) return reply("`only the owner can use /announce`");
-  if (!text) return reply("`usage: /announce <message>`");
-  return reply(`\`announcement\`\n\n${text}`);
+  if (msg.user_id !== OWNER_ID) return reply("**Only the owner can use /announce**");
+  if (!text) return reply("## Usage\n`/announce <message>`");
+
+  let t = `## Announcement\n`;
+  t += `-------\n`;
+  t += `-> ${text} <-`;
+
+  return reply(t);
 }
 
 async function cmdUptime(reply) {
-  return reply(`\`uptime: ${formatUptime(Date.now() - START_TIME)}\``);
+  return reply(`${row("**Uptime**", `\`${formatUptime(Date.now() - START_TIME)}\``)}`);
 }
 
 async function cmdPing(msg, reply) {
   const latency = Date.now() - new Date(msg.created_at).getTime();
-  return reply(`\`pong ${latency}ms\``);
+  return reply(`${row("**Pong**", `\`${latency}ms\``)}`);
 }
 
 async function cmdCount(reply) {
-  return reply(`\`tracking ${store.count()} users\``);
+  return reply(`${row("**Tracking**", `**${store.count()}** users`)}`);
 }
 
 async function cmdDocs(reply) {
-  return reply("`beacon api docs`\n\nhttps://api-beacon.up.railway.app/docs");
+  return reply("## Beacon API\n-------\nhttps://api-beacon.up.railway.app/docs");
 }
 
 async function cmdPrivacy(reply) {
-  return reply("`beacon privacy policy`\n\nhttps://api-beacon.up.railway.app/privacy");
+  return reply("## Privacy Policy\n-------\nhttps://api-beacon.up.railway.app/privacy");
+}
+
+async function cmdHelp(reply) {
+  let t = `## Beacon Commands\n`;
+  t += `-------\n`;
+  t += `| Command | Description |\n`;
+  t += `| --- | --- |\n`;
+  t += `| \`/status <user>\` | Current status |\n`;
+  t += `| \`/profile <user>\` | Full profile |\n`;
+  t += `| \`/userid <user>\` | Get user ID |\n`;
+  t += `| \`/whois <id>\` | Resolve ID |\n`;
+  t += `| \`/avatar <user>\` | Avatar URL |\n`;
+  t += `| \`/badges <user>\` | List badges |\n`;
+  t += `| \`/bio <user>\` | User bio |\n`;
+  t += `| \`/socials <user>\` | Social links |\n`;
+  t += `| \`/tag <user>\` | Server tag |\n`;
+  t += `| \`/spotify <user>\` | Now playing |\n`;
+  t += `| \`/compare <a> <b>\` | Compare users |\n`;
+  t += `| \`/online\` | Online users |\n`;
+  t += `| \`/offline\` | Recently offline |\n`;
+  t += `| \`/mobile\` | Mobile users |\n`;
+  t += `| \`/role <role>\` | Users by role |\n`;
+  t += `| \`/search <query>\` | Search users |\n`;
+  t += `| \`/random\` | Random user |\n`;
+  t += `| \`/api <user>\` | Raw JSON |\n`;
+  t += `| \`/kv [user]\` | View KV data |\n`;
+  t += `| \`/kv set <k> <v>\` | Set KV |\n`;
+  t += `| \`/kv del <key>\` | Delete KV |\n`;
+  t += `| \`/set <key> <val>\` | Store value |\n`;
+  t += `| \`/get <key>\` | Get value |\n`;
+  t += `| \`/del <key>\` | Delete key |\n`;
+  t += `| \`/keys\` | List keys |\n`;
+  t += `| \`/note <user> <t>\` | Add note |\n`;
+  t += `| \`/notes <user>\` | View notes |\n`;
+  t += `| \`/server\` | Server info |\n`;
+  t += `| \`/stats\` | Bot stats |\n`;
+  t += `| \`/count\` | User count |\n`;
+  t += `| \`/uptime\` | Bot uptime |\n`;
+  t += `| \`/ping\` | Latency |\n`;
+  t += `| \`/docs\` | API docs |\n`;
+  t += `| \`/privacy\` | Privacy policy |\n`;
+
+  return reply(t);
 }
 
 async function cmdKV(input, msg, reply) {
@@ -588,13 +699,13 @@ async function cmdKV(input, msg, reply) {
     const key = parts[1];
     const value = parts.slice(2).join(" ");
     kv.set(`kv:${msg.user_id}:${key}`, value);
-    return reply(`\`${key} = ${value}\``);
+    return reply(`${row(`\`${key}\``, `\`${value}\``)}`);
   }
 
   if (parts[0] === "del" && parts.length >= 2) {
     const key = parts[1];
     kv.del(`kv:${msg.user_id}:${key}`);
-    return reply(`\`deleted ${key}\``);
+    return reply(`~~${key}~~ **deleted**`);
   }
 
   const userId = parts[0] ? findUser(parts[0])?.id || msg.user_id : msg.user_id;
@@ -607,24 +718,34 @@ async function cmdKV(input, msg, reply) {
     if (k.startsWith(prefix)) userKV[k.replace(prefix, "")] = kv.get(k);
   });
 
-  let t = `\`beacon kv for ${name}\`\n\n`;
-  JSON.stringify(userKV, null, 2)
-    .split("\n")
-    .forEach((line) => (t += `\`${line}\`\n`));
-  t += "\n";
-  t += `api url\n`;
+  const kvKeys = Object.keys(userKV);
+
+  let t = `## KV for ${name}\n`;
+  t += `-------\n`;
+
+  if (kvKeys.length) {
+    t += `| Key | Value |\n`;
+    t += `| --- | --- |\n`;
+    kvKeys.forEach((k) => (t += `| \`${k}\` | \`${userKV[k]}\` |\n`));
+  } else {
+    t += `*No KV data*\n`;
+  }
+
+  t += `\n+++ API Usage\n`;
   t += `\`https://api-beacon.up.railway.app/v1/users/${userId}\`\n\n`;
-  t += `json path: \`.data.kv.KEY_NAME\` — socket path: \`.d.kv.KEY_NAME\`\n\n`;
+  t += `REST: \`.data.kv.KEY_NAME\`\n`;
+  t += `Socket: \`.d.kv.KEY_NAME\`\n\n`;
   t += `\`/kv set <key> <value>\`\n`;
   t += `\`/kv del <key>\`\n`;
-  t += `\`/kv <username>\``;
+  t += `\`/kv <username>\`\n`;
+  t += `+++`;
 
   return reply(t);
 }
 
 async function cmdWho(query, msg, reply) {
   const user = query ? findUser(query) : store.get(msg.user_id);
-  if (!user) return reply(`\`user "${query}" not found\``);
+  if (!user) return reply(`**User "${query}" not found**`);
 
   const prefix = `kv:${user.id}:`;
   const userKV = {};
@@ -634,12 +755,19 @@ async function cmdWho(query, msg, reply) {
 
   const kvKeys = Object.keys(userKV);
 
-  let t = `\`beacon whois\`\n\n`;
-  t += `\`api-beacon.up.railway.app/v1/users/${user.id}\`\n\n`;
-  t += kvKeys.length
-    ? kvKeys.map((k) => `\`${k} = ${userKV[k]}\``).join("\n") + "\n"
-    : "`no kv data`\n";
-  t += `\n\`id: ${user.id}\``;
+  let t = `## ${user.display_name}\n`;
+  t += `@${user.username} · \`${user.id}\`\n`;
+  t += `-------\n`;
+  t += `${row("**API**", `\`api-beacon.up.railway.app/v1/users/${user.id}\``)}\n\n`;
+
+  if (kvKeys.length) {
+    t += `**KV Data**\n`;
+    t += `| Key | Value |\n`;
+    t += `| --- | --- |\n`;
+    kvKeys.forEach((k) => (t += `| \`${k}\` | \`${userKV[k]}\` |\n`));
+  } else {
+    t += `*No KV data*`;
+  }
 
   return reply(t);
 }
