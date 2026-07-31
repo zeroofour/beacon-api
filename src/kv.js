@@ -1,10 +1,17 @@
 const fs = require("fs");
 const path = require("path");
 
+<<<<<<< HEAD
 const FILE = path.join(__dirname, "../data/kv.json");
 const DIR = path.join(__dirname, "../data");
 
 if (!fs.existsSync(DIR)) fs.mkdirSync(DIR);
+=======
+const DIR = path.join(__dirname, "../data");
+const FILE = path.join(DIR, "kv.json");
+
+if (!fs.existsSync(DIR)) fs.mkdirSync(DIR, { recursive: true });
+>>>>>>> 7e5f0d1
 
 let data = {};
 
