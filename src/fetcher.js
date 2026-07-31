@@ -10,21 +10,21 @@ const HEADERS = {
 };
 
 const PLATFORM_BADGES = {
-  team: { name: "Team", icon: "⚙️" },
-  founder: { name: "Founder", icon: "👑" },
-  verified: { name: "Verified", icon: "✅" },
-  supporter: { name: "Supporter", icon: "❤️" },
-  early_supporter: { name: "Early Supporter", icon: "🌟" },
-  partner: { name: "Partner", icon: "🤝" },
-  moderator: { name: "Moderator", icon: "🔨" },
-  staff: { name: "Staff", icon: "🛡️" },
-  bot: { name: "Bot", icon: "🤖" },
-  contributor: { name: "Contributor", icon: "📦" },
-  bug_hunter: { name: "Bug Hunter", icon: "🐛" },
-  translator: { name: "Translator", icon: "🌐" },
-  premium: { name: "Premium", icon: "💎" },
-  booster: { name: "Booster", icon: "🔮" },
-  og: { name: "OG", icon: "🏆" },
+  team: { name: "TEAM", icon: "" },
+  founder: { name: "FOUNDER", icon: "" },
+  verified: { name: "VERIFIED", icon: "" },
+  supporter: { name: "SUPPORTER", icon: "" },
+  early_supporter: { name: "EARLY SUPPORTER", icon: "" },
+  partner: { name: "PARTNER", icon: "" },
+  moderator: { name: "MODERATOR", icon: "" },
+  staff: { name: "STAFF", icon: "" },
+  bot: { name: "BOT", icon: "" },
+  contributor: { name: "CONTRIBUTOR", icon: "" },
+  bug_hunter: { name: "BUG HUNTER", icon: "" },
+  translator: { name: "TRANSLATOR", icon: "" },
+  premium: { name: "PREMIUM", icon: "" },
+  booster: { name: "BOOSTER", icon: "" },
+  og: { name: "OG", icon: "" },
 };
 
 const SELF_BADGES = {

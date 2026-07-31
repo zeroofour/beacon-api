@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Beacon — Live Demo</title>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
     @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
 
@@ -73,13 +74,8 @@
     }
 
     @keyframes pulse {
-      0%,
-      100% {
-        opacity: 1;
-      }
-      50% {
-        opacity: 0.4;
-      }
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
     }
 
     header p {
@@ -436,6 +432,45 @@
       font-size: 12px;
     }
 
+    .badge-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .badge-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .badge-item svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .badge-item .badge-emoji {
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .badge-item.platform {
+      border-color: var(--border-hover);
+      background: var(--bg-muted);
+    }
+
+    .badge-item.platform .badge-emoji {
+      font-size: 13px;
+    }
+
     .json-panel {
       margin-top: 16px;
     }
@@ -689,6 +724,10 @@
       if (e.key === "Enter") searchUser();
     });
 
+    document.getElementById("searchInput").addEventListener("input", () => {
+      renderUsers();
+    });
+
     async function fetchUsers() {
       try {
         const res = await fetch(`${API}/v1/users`);
@@ -711,6 +750,22 @@
       document.getElementById("statOnline").textContent = online;
       document.getElementById("statIdle").textContent = idle;
       document.getElementById("statDnd").textContent = dnd;
+    }
+
+    function renderBadgeIcon(b) {
+      if (typeof b === "string") return `<span class="badge-item">${b}</span>`;
+
+      const typeClass = b.type === "platform" ? " platform" : "";
+
+      if (b.icon) {
+        return `<span class="badge-item${typeClass}"><span class="badge-emoji">${b.icon}</span>${b.name}</span>`;
+      }
+
+      if (b.lucide) {
+        return `<span class="badge-item${typeClass}"><i data-lucide="${b.lucide}"></i>${b.name}</span>`;
+      }
+
+      return `<span class="badge-item${typeClass}">${b.name}</span>`;
     }
 
     function renderUsers() {
@@ -736,7 +791,8 @@
         return (order[a.presence?.status] ?? 3) - (order[b.presence?.status] ?? 3);
       });
 
-      document.getElementById("userCount").textContent = `${filtered.length} user${filtered.length !== 1 ? "s" : ""}`;
+      document.getElementById("userCount").textContent =
+        `${filtered.length} user${filtered.length !== 1 ? "s" : ""}`;
 
       if (!filtered.length) {
         list.innerHTML = `
@@ -758,14 +814,19 @@
             u.platform_role && u.platform_role !== "user"
               ? `<span class="role-badge">${u.platform_role}</span>`
               : "";
-          const mobileIcon = u.presence?.is_mobile ? `<span class="mobile-icon">📱</span>` : "";
-          const spotifyHtml =
-            u.spotify?.now_playing
-              ? `<span class="spotify-pill">♫ ${u.spotify.now_playing}</span>`
-              : "";
-          const badgeCount = (u.badges?.length || 0) + (u.self_badges?.length || 0);
-          const badgeInfo = badgeCount ? ` · ${badgeCount} badge${badgeCount !== 1 ? "s" : ""}` : "";
-          const meta = (u.presence?.custom_status?.text || u.bio || u.id) + badgeInfo;
+          const mobileIcon = u.presence?.is_mobile
+            ? `<span class="mobile-icon">📱</span>`
+            : "";
+          const spotifyHtml = u.spotify?.now_playing
+            ? `<span class="spotify-pill">♫ ${u.spotify.now_playing}</span>`
+            : "";
+          const badgeCount =
+            (u.badges?.length || 0) + (u.self_badges?.length || 0);
+          const badgeInfo = badgeCount
+            ? ` · ${badgeCount} badge${badgeCount !== 1 ? "s" : ""}`
+            : "";
+          const meta =
+            (u.presence?.custom_status?.text || u.bio || u.id) + badgeInfo;
 
           return `
             <li class="user-item" onclick="showDetail('${u.id}')">
@@ -805,16 +866,14 @@
         `@${user.username} · ${user.id}`;
 
       const allBadges = [...(user.badges || []), ...(user.self_badges || [])];
-      const badgeText = allBadges.length
-        ? allBadges
-            .map((b) => {
-              if (typeof b === "string") return b;
-              if (b.icon) return `${b.icon} ${b.name}`;
-              if (b.lucide) return b.name;
-              return b.name || b.id || "?";
-            })
-            .join(", ")
-        : "—";
+
+      let badgeHtml = '<span style="color: var(--text-dim);">—</span>';
+      if (allBadges.length) {
+        badgeHtml =
+          '<div class="badge-list">' +
+          allBadges.map(renderBadgeIcon).join("") +
+          "</div>";
+      }
 
       const cells = [
         ["Status", user.presence?.status || "offline"],
@@ -827,19 +886,31 @@
         ],
         ["Bio", user.bio || "—"],
         ["Custom Status", user.presence?.custom_status?.text || "—"],
-        ["Badges", badgeText],
-        ["API", `${API}/v1/users/${user.id}`],
       ];
 
-      document.getElementById("detailGrid").innerHTML = cells
+      let gridHtml = cells
         .map(
           ([label, value]) => `
           <div class="detail-cell">
             <div class="label">${label}</div>
-            <div class="value${label === "API" ? " mono" : ""}">${value}</div>
+            <div class="value">${value}</div>
           </div>`
         )
         .join("");
+
+      gridHtml += `
+        <div class="detail-cell" style="grid-column: 1 / -1;">
+          <div class="label">Badges</div>
+          <div class="value">${badgeHtml}</div>
+        </div>`;
+
+      gridHtml += `
+        <div class="detail-cell" style="grid-column: 1 / -1;">
+          <div class="label">API</div>
+          <div class="value mono">${API}/v1/users/${user.id}</div>
+        </div>`;
+
+      document.getElementById("detailGrid").innerHTML = gridHtml;
 
       const jsonPanel = document.getElementById("jsonPanel");
       jsonPanel.style.display = "block";
@@ -848,6 +919,8 @@
         null,
         2
       );
+
+      lucide.createIcons();
 
       panel.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -957,10 +1030,6 @@
         )
         .join("");
     }
-
-    document.getElementById("searchInput").addEventListener("input", () => {
-      renderUsers();
-    });
 
     fetchUsers();
     setInterval(fetchUsers, 30000);
