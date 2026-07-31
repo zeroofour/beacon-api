@@ -109,7 +109,7 @@ function parseBadge(id) {
   return {
     id: key,
     name: mapped?.name || dynamic?.name || toDisplayName(key),
-    icon: mapped?.icon || dynamic?.icon || "🏅",
+    icon: mapped?.icon ?? dynamic?.icon ?? null,
     type: "platform",
   };
 }
