@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
+const path = require("path");
 const { initPusher, listenToAllChannels } = require("./src/pusher");
 const {
   fetchAllUsers,
@@ -29,6 +30,10 @@ app.get("/v1/badges", (req, res) => {
 setupGitHubWebhook(app);
 app.use(api);
 setupWebSocket(server);
+
+app.get(/^\/(?!v1|socket|github).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 let serverIds = [];
 let channelIds = [];
@@ -69,7 +74,6 @@ server.listen(PORT, async () => {
     if (fresh.length) {
       badgeDefinitions = fresh;
       setBadgeDefinitions(fresh);
-      console.log(`[Badges] Refreshed ${fresh.length} badge definitions`);
     }
   }, 3600000);
 });

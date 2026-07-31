@@ -1,13 +1,16 @@
 {
   "name": "distalk-beacon",
-  "version": "3.0.0",
-  "main": "server.js",
+  "version": "4.0.0",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "cd client && npm install && npm run build"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
     "cors": "^2.8.5",
-    "express": "^4.21.0",
-    "ws": "^8.18.0"
+    "express": "^4.21.2",
+    "shadcn": "^4.16.1",
+    "tailwindcss": "^4.3.3",
+    "ws": "^8.18.2"
   }
 }
