@@ -21,7 +21,6 @@ let badgeDefinitions = [];
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
 
 app.get("/v1/badges", (req, res) => {
   res.json({ success: true, count: badgeDefinitions.length, data: badgeDefinitions });
@@ -31,9 +30,15 @@ setupGitHubWebhook(app);
 app.use(api);
 setupWebSocket(server);
 
-app.get(/^\/(?!v1|socket|github).*/, (req, res) => {
+app.use(express.static("public"));
+
+app.get("/home", sendApp);
+app.get("/docs", sendApp);
+app.get("/privacy", sendApp);
+
+function sendApp(req, res) {
   res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+}
 
 let serverIds = [];
 let channelIds = [];
