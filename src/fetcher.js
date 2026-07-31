@@ -248,6 +248,7 @@ async function fetchMessages(since) {
 async function send(channelId, body, serverId) {
   try {
     console.log(`[Bot] Sending to ${channelId} (${body.length} chars)`);
+
     const res = await fetch(`${BASE}/index.php?api=send_message`, {
       method: "POST",
       headers: {

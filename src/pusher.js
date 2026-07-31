@@ -10,7 +10,8 @@ const START_TIME = Date.now();
 let commandsRun = 0;
 let ws = null;
 let pingTimer = null;
-let lastSync = new Date(Date.now() - 5000).toISOString();
+let messagePollTimer = null;
+let lastSync = new Date(Date.now() - 30000).toISOString();
 let syncing = false;
 
 const subs = new Set();
@@ -22,10 +23,13 @@ function initPusher() {
     "wss://ws-eu.pusher.com/app/8ecfcde38263841b251c?protocol=7&client=distalk&version=1.0&flash=false"
   );
 
-  ws.on("open", () => console.log("[WS] Connected"));
+  ws.on("open", () => {
+    console.log("[WS] Connected");
+  });
 
   ws.on("message", async (raw) => {
     let p;
+
     try {
       p = JSON.parse(raw);
     } catch {
@@ -33,63 +37,117 @@ function initPusher() {
     }
 
     if (p.event === "pusher:connection_established") {
+      console.log("[WS] Connection established");
+
       subs.forEach((ch) => sub(ch));
+
       clearInterval(pingTimer);
       pingTimer = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ event: "pusher:ping", data: {} }));
         }
       }, 30000);
+
+      startMessagePolling();
       return;
     }
 
     if (p.event === "pusher:pong") return;
-    if (p.event === "pusher_internal:subscription_succeeded") return;
+
+    if (p.event === "pusher_internal:subscription_succeeded") {
+      console.log("[WS] Subscription succeeded");
+      return;
+    }
 
     if (p.event === "sync") {
-      if (syncing) return;
-      syncing = true;
-      await checkMessages();
-      syncing = false;
+      console.log("[WS] sync");
+      triggerMessageCheck();
     }
   });
 
   ws.on("close", (code) => {
     console.warn(`[WS] Closed (${code}). Reconnecting in 5s...`);
     clearInterval(pingTimer);
+    clearInterval(messagePollTimer);
+    messagePollTimer = null;
     setTimeout(initPusher, 5000);
   });
 
-  ws.on("error", (e) => console.error("[WS]", e.message));
+  ws.on("error", (e) => {
+    console.error("[WS]", e.message);
+  });
+}
+
+function startMessagePolling() {
+  if (messagePollTimer) return;
+
+  console.log("[Bot] Starting message poller");
+
+  messagePollTimer = setInterval(() => {
+    triggerMessageCheck();
+  }, 3000);
+}
+
+function triggerMessageCheck() {
+  if (syncing) return;
+
+  syncing = true;
+  checkMessages()
+    .catch((err) => {
+      console.error("[Bot] checkMessages error:", err.message);
+    })
+    .finally(() => {
+      syncing = false;
+    });
 }
 
 function sub(name) {
+  console.log(`[WS] Subscribing to ${name}`);
+
   if (ws?.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: name } }));
+    ws.send(
+      JSON.stringify({
+        event: "pusher:subscribe",
+        data: { channel: name },
+      })
+    );
   }
+
   subs.add(name);
 }
 
 async function checkMessages() {
   const msgs = await fetchMessages(lastSync);
+
   if (!msgs?.length) return;
 
+  console.log(`[Bot] fetched ${msgs.length} message(s) since ${lastSync}`);
+
   lastSync = new Date().toISOString();
+
   const fresh = msgs.filter((m) => !seen.has(m.id));
   if (!fresh.length) return;
 
   for (const msg of fresh) {
     seen.add(msg.id);
-    if (seen.size > 1000) seen.delete(seen.values().next().value);
+    if (seen.size > 1000) {
+      seen.delete(seen.values().next().value);
+    }
+
     if (msg.user_id === BOT_ID) continue;
     if (!msg.body?.startsWith("/")) continue;
     if (replied.has(msg.id)) continue;
 
     const age = Date.now() - new Date(msg.created_at).getTime();
-    if (age > 15000) continue;
+    if (age > 60000) {
+      console.log(`[Chat] skipped old command (${age}ms): ${msg.body}`);
+      continue;
+    }
 
     replied.add(msg.id);
-    if (replied.size > 500) replied.delete(replied.values().next().value);
+    if (replied.size > 500) {
+      replied.delete(replied.values().next().value);
+    }
 
     console.log(`[Chat] "${msg.body}" from ${msg.user_id} in ${msg.channel_id}`);
     await handleCommand(msg);
@@ -106,42 +164,78 @@ async function handleCommand(msg) {
   commandsRun++;
 
   switch (cmd) {
-    case "/status":   return cmdStatus(argsLower, reply);
-    case "/online":   return cmdOnline(reply);
-    case "/profile":  return cmdProfile(argsLower, reply);
-    case "/search":   return cmdSearch(argsLower, reply);
-    case "/api":      return cmdApi(argsLower, reply);
-    case "/userid":   return cmdUserId(argsLower, reply);
-    case "/avatar":   return cmdAvatar(argsLower, reply);
-    case "/badges":   return cmdBadges(argsLower, reply);
-    case "/spotify":  return cmdSpotify(argsLower, reply);
-    case "/server":   return cmdServer(msg, reply);
-    case "/uptime":   return cmdUptime(reply);
-    case "/ping":     return cmdPing(msg, reply);
-    case "/count":    return cmdCount(reply);
-    case "/socials":  return cmdSocials(argsLower, reply);
-    case "/tag":      return cmdTag(argsLower, reply);
-    case "/compare":  return cmdCompare(argsLower, reply);
-    case "/random":   return cmdRandom(reply);
-    case "/mobile":   return cmdMobile(reply);
-    case "/offline":  return cmdOffline(reply);
-    case "/role":     return cmdRole(argsLower, reply);
-    case "/bio":      return cmdBio(argsLower, reply);
-    case "/whois":    return cmdWhois(argsLower, reply);
-    case "/stats":    return cmdStats(reply);
-    case "/set":      return cmdSet(args, msg, reply);
-    case "/get":      return cmdGet(argsLower, reply);
-    case "/del":      return cmdDel(argsLower, msg, reply);
-    case "/keys":     return cmdKeys(reply);
-    case "/kv":       return cmdKV(args, msg, reply);
-    case "/note":     return cmdNote(args, msg, reply);
-    case "/notes":    return cmdNotes(argsLower, reply);
-    case "/announce": return cmdAnnounce(args, msg, reply);
-    case "/docs":     return cmdDocs(reply);
-    case "/privacy":  return cmdPrivacy(reply);
-    case "/who":      return cmdWho(argsLower, msg, reply);
-    case "/help":     return cmdHelp(reply);
-    default:          return;
+    case "/status":
+      return cmdStatus(argsLower, reply);
+    case "/online":
+      return cmdOnline(reply);
+    case "/profile":
+      return cmdProfile(argsLower, reply);
+    case "/search":
+      return cmdSearch(argsLower, reply);
+    case "/api":
+      return cmdApi(argsLower, reply);
+    case "/userid":
+      return cmdUserId(argsLower, reply);
+    case "/avatar":
+      return cmdAvatar(argsLower, reply);
+    case "/badges":
+      return cmdBadges(argsLower, reply);
+    case "/spotify":
+      return cmdSpotify(argsLower, reply);
+    case "/server":
+      return cmdServer(msg, reply);
+    case "/uptime":
+      return cmdUptime(reply);
+    case "/ping":
+      return cmdPing(msg, reply);
+    case "/count":
+      return cmdCount(reply);
+    case "/socials":
+      return cmdSocials(argsLower, reply);
+    case "/tag":
+      return cmdTag(argsLower, reply);
+    case "/compare":
+      return cmdCompare(argsLower, reply);
+    case "/random":
+      return cmdRandom(reply);
+    case "/mobile":
+      return cmdMobile(reply);
+    case "/offline":
+      return cmdOffline(reply);
+    case "/role":
+      return cmdRole(argsLower, reply);
+    case "/bio":
+      return cmdBio(argsLower, reply);
+    case "/whois":
+      return cmdWhois(argsLower, reply);
+    case "/stats":
+      return cmdStats(reply);
+    case "/set":
+      return cmdSet(args, msg, reply);
+    case "/get":
+      return cmdGet(argsLower, reply);
+    case "/del":
+      return cmdDel(argsLower, msg, reply);
+    case "/keys":
+      return cmdKeys(reply);
+    case "/kv":
+      return cmdKV(args, msg, reply);
+    case "/note":
+      return cmdNote(args, msg, reply);
+    case "/notes":
+      return cmdNotes(argsLower, reply);
+    case "/announce":
+      return cmdAnnounce(args, msg, reply);
+    case "/docs":
+      return cmdDocs(reply);
+    case "/privacy":
+      return cmdPrivacy(reply);
+    case "/who":
+      return cmdWho(argsLower, msg, reply);
+    case "/help":
+      return cmdHelp(reply);
+    default:
+      return;
   }
 }
 
@@ -192,15 +286,18 @@ async function cmdOnline(reply) {
     online.forEach((u) => (t += `- [x] ${u.display_name} (@${u.username})\n`));
     t += "\n";
   }
+
   if (idle.length) {
     t += `**Idle** (${idle.length})\n`;
     idle.forEach((u) => (t += `- [ ] ${u.display_name} (@${u.username})\n`));
     t += "\n";
   }
+
   if (dnd.length) {
     t += `**DND** (${dnd.length})\n`;
     dnd.forEach((u) => (t += `- [ ] ${u.display_name} (@${u.username})\n`));
   }
+
   if (!total) t += "*Nobody is online right now*";
 
   return reply(t);
@@ -223,11 +320,14 @@ async function cmdProfile(query, reply) {
   if (user.badges?.length) {
     t += `${row("**Badges**", formatBadgeList(user.badges))}\n`;
   }
+
   if (user.self_badges?.length) {
     t += `${row("**Tags**", formatBadgeList(user.self_badges))}\n`;
   }
 
-  if (user.tag) t += `${row("**Server Tag**", `${user.tag.text || ""} (${user.tag.server_name})`)}\n`;
+  if (user.tag) {
+    t += `${row("**Server Tag**", `${user.tag.text || ""} (${user.tag.server_name})`)}\n`;
+  }
 
   if (user.socials?.youtube) t += `${row("**YouTube**", user.socials.youtube)}\n`;
   if (user.socials?.twitch) t += `${row("**Twitch**", user.socials.twitch)}\n`;
@@ -240,6 +340,7 @@ async function cmdProfile(query, reply) {
       t += `${row("**Spotify**", "connected")}\n`;
     }
   }
+
   if (p.activity) t += `${row("**Activity**", p.activity)}\n`;
 
   return reply(t);
@@ -260,9 +361,9 @@ async function cmdSearch(query, reply) {
   let t = `## Search Results\n`;
   t += `**"${query}"** — ${results.length} result${results.length !== 1 ? "s" : ""}\n`;
   t += `-------\n`;
-
   t += `| User | Status |\n`;
   t += `| --- | --- |\n`;
+
   results.forEach((u) => {
     t += `| ${u.display_name} (@${u.username}) | \`${u.presence.status}\` |\n`;
   });
@@ -281,7 +382,9 @@ async function cmdApi(query, reply) {
   let t = `## API Response\n`;
   t += `\`${user.display_name}\`\n`;
   t += `-------\n`;
-  json.split("\n").forEach((line) => (t += `\`${line}\`\n`));
+  json.split("\n").forEach((line) => {
+    t += `\`${line}\`\n`;
+  });
 
   return reply(t);
 }
@@ -319,7 +422,7 @@ async function cmdBadges(query, reply) {
   if (platform.length) {
     t += `**Platform**\n`;
     platform.forEach((b) => {
-      t += `- [x] ${b.icon ? b.icon + " " : ""}${b.name}\n`;
+      t += `- [x] ${b.icon ? `${b.icon} ` : ""}${b.name}\n`;
     });
     t += "\n";
   }
@@ -327,7 +430,7 @@ async function cmdBadges(query, reply) {
   if (self.length) {
     t += `**Self**\n`;
     self.forEach((b) => {
-      t += `- [x] ${b.icon ? b.icon + " " : ""}${b.name}\n`;
+      t += `- [x] ${b.icon ? `${b.icon} ` : ""}${b.name}\n`;
     });
   }
 
@@ -357,8 +460,8 @@ async function cmdSocials(query, reply) {
   t += `**Socials**\n`;
   t += `-------\n`;
   if (s.youtube) t += `${row("**YouTube**", s.youtube)}\n`;
-  if (s.twitch)  t += `${row("**Twitch**", s.twitch)}\n`;
-  if (s.tiktok)  t += `${row("**TikTok**", s.tiktok)}\n`;
+  if (s.twitch) t += `${row("**Twitch**", s.twitch)}\n`;
+  if (s.tiktok) t += `${row("**TikTok**", s.tiktok)}\n`;
   if (s.spotify) t += `${row("**Spotify**", s.spotify)}\n`;
 
   return reply(t);
@@ -375,7 +478,9 @@ async function cmdTag(query, reply) {
   t += `-------\n`;
   t += `${row("**Text**", user.tag.text || "—")}\n`;
   t += `${row("**Server**", user.tag.server_name)}\n`;
-  if (user.tag.invite_slug) t += `${row("**Invite**", `distalk.app/invite/${user.tag.invite_slug}`)}\n`;
+  if (user.tag.invite_slug) {
+    t += `${row("**Invite**", `distalk.app/invite/${user.tag.invite_slug}`)}\n`;
+  }
 
   return reply(t);
 }
@@ -429,7 +534,9 @@ async function cmdMobile(reply) {
   let t = `## Mobile Users\n`;
   t += `**${mobile.length}** user${mobile.length !== 1 ? "s" : ""}\n`;
   t += `-------\n`;
-  mobile.forEach((u) => (t += `- [x] ${u.display_name} (@${u.username}) — \`${u.presence.status}\`\n`));
+  mobile.forEach((u) => {
+    t += `- [x] ${u.display_name} (@${u.username}) — \`${u.presence.status}\`\n`;
+  });
 
   return reply(t);
 }
@@ -447,6 +554,7 @@ async function cmdOffline(reply) {
   t += `-------\n`;
   t += `| User | Last Seen |\n`;
   t += `| --- | --- |\n`;
+
   offline.forEach((u) => {
     t += `| ${u.display_name} (@${u.username}) | ${timeAgo(u.presence.last_seen)} |\n`;
   });
@@ -455,7 +563,9 @@ async function cmdOffline(reply) {
 }
 
 async function cmdRole(query, reply) {
-  if (!query) return reply("## Usage\n`/role <role>`\n\nRoles: `user`, `admin`, `owner`, `supporter`");
+  if (!query) {
+    return reply("## Usage\n`/role <role>`\n\nRoles: `user`, `admin`, `owner`, `supporter`");
+  }
 
   const users = store.values().filter((u) => u.platform_role === query);
   if (!users.length) return reply(`**No users with role "${query}"**`);
@@ -463,7 +573,10 @@ async function cmdRole(query, reply) {
   let t = `## Role: ${query}\n`;
   t += `**${users.length}** user${users.length !== 1 ? "s" : ""}\n`;
   t += `-------\n`;
-  users.forEach((u) => (t += `- [x] ${u.display_name} (@${u.username}) — \`${u.presence.status}\`\n`));
+
+  users.forEach((u) => {
+    t += `- [x] ${u.display_name} (@${u.username}) — \`${u.presence.status}\`\n`;
+  });
 
   return reply(t);
 }
@@ -579,7 +692,10 @@ async function cmdKeys(reply) {
   t += `-------\n`;
   t += `| Key | Value |\n`;
   t += `| --- | --- |\n`;
-  keys.forEach((k) => (t += `| \`${k}\` | \`${kv.get(k)}\` |\n`));
+
+  keys.forEach((k) => {
+    t += `| \`${k}\` | \`${kv.get(k)}\` |\n`;
+  });
 
   return reply(t);
 }
@@ -590,6 +706,7 @@ async function cmdNote(input, msg, reply) {
 
   const username = input.substring(0, space).trim().toLowerCase();
   const text = input.substring(space + 1).trim();
+
   const user = findUser(username);
   if (!user) return reply(`**User "${username}" not found**`);
 
@@ -612,7 +729,10 @@ async function cmdNotes(query, reply) {
   let t = `## Notes for ${user.display_name}\n`;
   t += `**${notes.length}** note${notes.length !== 1 ? "s" : ""}\n`;
   t += `-------\n`;
-  notes.forEach((n, i) => (t += `${i + 1}. ${n.text}\n`));
+
+  notes.forEach((n, i) => {
+    t += `${i + 1}. ${n.text}\n`;
+  });
 
   return reply(t);
 }
@@ -714,6 +834,7 @@ async function cmdKV(input, msg, reply) {
 
   const prefix = `kv:${userId}:`;
   const userKV = {};
+
   kv.keys().forEach((k) => {
     if (k.startsWith(prefix)) userKV[k.replace(prefix, "")] = kv.get(k);
   });
@@ -726,7 +847,9 @@ async function cmdKV(input, msg, reply) {
   if (kvKeys.length) {
     t += `| Key | Value |\n`;
     t += `| --- | --- |\n`;
-    kvKeys.forEach((k) => (t += `| \`${k}\` | \`${userKV[k]}\` |\n`));
+    kvKeys.forEach((k) => {
+      t += `| \`${k}\` | \`${userKV[k]}\` |\n`;
+    });
   } else {
     t += `*No KV data*\n`;
   }
@@ -749,6 +872,7 @@ async function cmdWho(query, msg, reply) {
 
   const prefix = `kv:${user.id}:`;
   const userKV = {};
+
   kv.keys().forEach((k) => {
     if (k.startsWith(prefix)) userKV[k.replace(prefix, "")] = kv.get(k);
   });
@@ -764,7 +888,9 @@ async function cmdWho(query, msg, reply) {
     t += `**KV Data**\n`;
     t += `| Key | Value |\n`;
     t += `| --- | --- |\n`;
-    kvKeys.forEach((k) => (t += `| \`${k}\` | \`${userKV[k]}\` |\n`));
+    kvKeys.forEach((k) => {
+      t += `| \`${k}\` | \`${userKV[k]}\` |\n`;
+    });
   } else {
     t += `*No KV data*`;
   }
@@ -787,14 +913,6 @@ function findUser(query) {
   );
 }
 
-function statusDot(s) {
-  return { online: "[on]", idle: "[idle]", dnd: "[dnd]", offline: "[off]" }[s] ?? "[off]";
-}
-
-function pad(str, len) {
-  return (str || "").substring(0, len).padEnd(len);
-}
-
 function timeAgo(date) {
   if (!date || date === "1970-01-01T00:00:00+00:00") return "unknown";
   const ms = Date.now() - new Date(date).getTime();
@@ -811,11 +929,13 @@ function formatUptime(ms) {
   const m = Math.floor(ms / 60000) % 60;
   const h = Math.floor(ms / 3600000) % 24;
   const d = Math.floor(ms / 86400000);
+
   let t = "";
   if (d > 0) t += `${d}d `;
   if (h > 0) t += `${h}h `;
   if (m > 0) t += `${m}m `;
   t += `${s}s`;
+
   return t;
 }
 
